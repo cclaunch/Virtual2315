@@ -11,4 +11,6 @@ flush with the front of the dress faceplate. I used a zip tie,
 other choices are possible.
 
 3 The terminator board needs to add a 383Ω resistor for AU1
-to properly terminate that signal line.
+to properly terminate that signal line. That goes at the location
+R36 on the board. You can remove the resistor at R91 to re-use it
+if you wish, since the signal line served by R91 is not used. 
