@@ -1,0 +1,11 @@
+When building the RK-05 Emulator purchased from George Wiley,
+use his instructions but apply these modifications:
+
+1 The dress faceplate in his kit is to be replaced by the 
+Virtual 2315 Cartridge Facility dress plate
+
+2 If implementing the Mini 2315 Cartridge objects,
+do not install the SD card PCB into the RK-05 Emulator.
+Instead, attach the ribbon connector with the key downward,
+flush with the front of the dress faceplate. I used a zip tie, 
+other choices are possible.
