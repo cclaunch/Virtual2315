@@ -9,3 +9,6 @@ do not install the SD card PCB into the RK-05 Emulator.
 Instead, attach the ribbon connector with the key downward,
 flush with the front of the dress faceplate. I used a zip tie, 
 other choices are possible.
+
+3 The terminator board needs to add a 383Ω resistor for AU1
+to properly terminate that signal line.
