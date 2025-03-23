@@ -48,7 +48,9 @@ def checkfile(path, fn):
         return
     cartnum = sf.read(11)
     desc = sf.read(200)
+    date = sf.read(20)
     print('Cartridge number',cartnum.decode("utf-8").rstrip('\x00'),'File',fn)
+    print('Date converted',date.decode("utf-8").rstrip('\x00'))
     print('Description:',desc.decode("utf-8").rstrip('\x00'))
     print ('')
 
