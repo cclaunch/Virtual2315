@@ -8,6 +8,7 @@ from tkinter import Tk
 from tkinter import filedialog as fd
 from tkinter import simpledialog
 import sys
+from datetime import datetime
 
 def select_file():
     filetypes = (
@@ -45,6 +46,11 @@ root.update_idletasks()  # Ensure window is ready
 print('Program to convert an IBM 1130 Simulator disk file')
 print('to the format used by the Virtual 2315 Cartridge Facility')
 print('')
+
+getdate = datetime.today()
+datetuple = getdate.utctimetuple()
+
+datestring = f"{datetuple[0]:4d}-{datetuple[1]:02d}-{datetuple[2]:02d} {datetuple[3]:02d}:{datetuple[4]:02d}:{datetuple[5]:02d}"
 
 sf = select_file()
 if (sf == None):
@@ -121,7 +127,7 @@ ef.write(b)
 remainder = 200 - len(desc)
 ef.write(b'\x00'*remainder)
 #                                             date and time created 20 bytes 19b null terminated
-ef.write(bytearray('2024-05-10 23:55:02','utf-8'))
+ef.write(bytearray(datestring,'utf-8'))
 ef.write(b'\x00')
 #                                             controller field 100 byte 29b null terminated
 ef.write(bytearray('1130 internal disk controller','utf-8'))
