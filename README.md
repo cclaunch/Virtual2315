@@ -1,3 +1,5 @@
+PROJECT STILL IN TESTING, WAIT TO DOWNLOAD AND USE
+
 This project allows an IBM 1130 to protect the rare disk heads and physical 2315 disk cartridges from crashes, while still making use of the disk drive and experiencing the sounds and vibrations associated with the drive.
 
 A file with the contents of a 2315 disk cartridge is stored on a microSD card inside a holder that looks like a miniature 2315. The project loads the content of the file into RAM when the cartridge is 'loaded', writing back the contents of RAM to the file when unloaded.
