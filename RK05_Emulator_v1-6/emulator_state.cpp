@@ -39,7 +39,7 @@ int intermediate_result;
             }
 
             // ensure read only is off when we are in idle state
-            if (get_wp_mode()) {
+            if (get_read_only()) {
                 printf("Resetting Ready Only in idle state\r\n");    // $$$ CVC $$$
                 toggle_wp();
             }

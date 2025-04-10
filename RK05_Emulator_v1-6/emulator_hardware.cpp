@@ -212,12 +212,6 @@ bool get_real_mode()
     return ((tempctrlreg & REAL_MODE) != 0x0);
 }
 
-bool get_wp_mode()
-{
-    int tempctrlreg = read_write_spi_register(SPI_READBACK_00_A0, 0);
-    return ((tempctrlreg & READ_ONLY_BIT) != 0x0);
-}
-
 void toggle_wp()
 {
     write_spi_register(SPI_COMMAND_4, TOGGLE_WP_BIT);
@@ -570,11 +564,7 @@ int drive_door_status()
 
 void initialize_gpio()
 {
-    // Set the TX and RX pins by using the function select on the GPIO
-    // Set datasheet for more information on function select
-    //gpio_set_function(UART0_TX_PIN, GPIO_FUNC_UART);
-    //gpio_set_function(UART0_RX_PIN, GPIO_FUNC_UART);
-
+    // LED
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
     gpio_put(LED_PIN, GPIO_OFF);
@@ -608,7 +598,6 @@ void initialize_gpio()
     gpio_init(SP_SDLED_N);
     gpio_set_dir(SP_SDLED_N, GPIO_OUT);
     gpio_put(SP_SDLED_N, GPIO_OFF);
-
 
     // microSD Card Detect input
     gpio_init(microSD_CD);

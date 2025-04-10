@@ -4,9 +4,9 @@ if(WIN32)
 else()
     set(USERHOME $ENV{HOME})
 endif()
-set(sdkVersion 2.1.0)
-set(toolchainVersion 13_3_Rel1)
-set(picotoolVersion 2.1.0)
+set(sdkVersion 2.1.1)
+set(toolchainVersion 14_2_Rel1)
+set(picotoolVersion 2.1.1)
 set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
 if (EXISTS ${picoVscode})
     include(${picoVscode})
@@ -30,7 +30,7 @@ set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
 
 add_executable(V2315CF_PICO
-	V2315CF.cpp
+	V2315CF_PICO.cpp
 	emulator_hardware.cpp
 	display_functions.cpp
 	emulator_state.cpp
@@ -44,17 +44,7 @@ add_executable(V2315CF_PICO
 add_subdirectory(lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
 
 # Pull in our pico_stdlib which pulls in commonl
-#target_link_libraries(RK05_Emulator_v00 pico_stdlib FatFs_SPI text_extended_ascii hardware_i2c pico_ssd1306)
-#target_link_libraries(RK05_Emulator_v00 pico_stdlib FatFs_SPI hardware_i2c pico_ssd1306 hardware_spi)
-target_link_libraries(RK05_Emulator_v00 pico_stdlib FatFs_SPI hardware_i2c hardware_spi hardware_gpio hardware_pwm hardware_adc)
-#target_link_libraries(RK05_Emulator_v00 pico_stdlib FatFs_SPI hardware_i2c hardware_spi hardware_gpio hardware_pwm pico_ssd1306)
-#target_link_libraries(RK05_Emulator_v00 pico_stdlib FatFs_SPI hardware_i2c hardware_spi)
+target_link_libraries(V2315CF_PICO pico_stdlib FatFs_SPI hardware_i2c hardware_spi hardware_gpio hardware_pwm hardware_adc)
 
 # create map/bin/hex file etc.
-#pico_add_extra_outputs(RK05_Emulator_v00 text_extended_ascii)
-#pico_add_extra_outputs(text_extended_ascii)
-pico_add_extra_outputs(RK05_Emulator_v00)
-
-# Enable usb output, disable uart output
-#pico_enable_stdio_usb(${PROJECT_NAME} 1)
-#pico_enable_stdio_uart(${PROJECT_NAME} 0)
+pico_add_extra_outputs(V2315CF_PICO)

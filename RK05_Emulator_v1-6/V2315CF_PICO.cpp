@@ -57,6 +57,8 @@
 // GLOBAL VARIABLES
 struct Disk_State edisk;
 
+#define SPI_CYLADDR_81 0x81
+
 #define INPUT_LINE_LENGTH 200
 char inputdata[INPUT_LINE_LENGTH];
 char *extract_argv[INPUT_LINE_LENGTH];
@@ -99,10 +101,6 @@ void gpio_callback(uint gpio, uint32_t events) {
 }
 
 void read_switches_and_set_drive_address(){
-//    int switch_read_value = read_drive_address_switches();
-//    edisk.Drive_Address = switch_read_value & DRIVE_ADDRESS_BITS_I2C;
-//    edisk.mode_RK05f = ((switch_read_value & DRIVE_FIXED_MODE_BIT_I2C) == 0) ? false : true;
-//    load_drive_address(edisk.Drive_Address);   2310 does not have multiple drives on a string
 }
 
 void initialize_states(){
@@ -194,6 +192,7 @@ int main() {
 
     ticker = 0;
     int reg00_val;
+    int reg81_val;
     printf("Virtual 2315 Cartridge Facility STARTING\n");
     display_splash_screen();
 
@@ -201,8 +200,10 @@ int main() {
     while (true) {
         if((ticker % 50) == 0){
             reg00_val = read_reg00();
-            printf("main loop %d, Drive_Address = %d, RLST%x, vsense = %d, reg00 = %x\r\n", ticker, edisk.Drive_Address, edisk.run_load_state, 
-                edisk.debug_vsense, reg00_val);
+            reg81_val = read_write_spi_register(SPI_CYLADDR_81, 0);
+            
+            printf("main loop %d, Drive_Address = %d, RLST%x, Cylinder = %d, reg00 = %x\r\n", ticker, edisk.Drive_Address, edisk.run_load_state, 
+                reg81_val, reg00_val);
         }
         read_rocker_switches(&edisk);
 
