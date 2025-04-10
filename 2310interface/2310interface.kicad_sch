@@ -2409,7 +2409,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 132.08 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 019cd5df-0c10-4f7d-b77f-95960bc18a03)
-    (property "Reference" "Bd5" (at 59.69 132.08 0)
+    (property "Reference" "B5" (at 59.69 132.08 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 129.54 0)
@@ -2425,7 +2425,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd5") (unit 1)
+          (reference "B5") (unit 1)
         )
       )
     )
@@ -2434,7 +2434,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 152.4 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 09c179ef-43b0-4869-89d6-be3d9ec244d8)
-    (property "Reference" "Bd9" (at 59.69 152.4 0)
+    (property "Reference" "B9" (at 59.69 152.4 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 149.86 0)
@@ -2450,7 +2450,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd9") (unit 1)
+          (reference "B9") (unit 1)
         )
       )
     )
@@ -2484,7 +2484,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 147.32 40.64 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 0f84a49e-182f-4f02-9971-43906d9a7622)
-    (property "Reference" "B5" (at 144.78 40.64 0)
+    (property "Reference" "AB5" (at 144.78 40.64 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 147.32 38.1 0)
@@ -2500,7 +2500,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "B5") (unit 1)
+          (reference "AB5") (unit 1)
         )
       )
     )
@@ -2663,7 +2663,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 133.35 76.2 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 2fa48203-25a2-40a2-90b9-a567fea36a8e)
-    (property "Reference" "D12" (at 135.89 76.2 0)
+    (property "Reference" "AD12" (at 135.89 76.2 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 133.35 73.66 0)
@@ -2679,7 +2679,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "D12") (unit 1)
+          (reference "AD12") (unit 1)
         )
       )
     )
@@ -2688,7 +2688,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 142.24 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 32c4e008-0e49-4819-8934-de5632b235f5)
-    (property "Reference" "Dd7" (at 53.34 142.24 0)
+    (property "Reference" "D7" (at 53.34 142.24 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 139.7 0)
@@ -2704,7 +2704,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd7") (unit 1)
+          (reference "D7") (unit 1)
         )
       )
     )
@@ -2713,7 +2713,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 172.72 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 36a91952-910a-4631-b27a-714e4e5e13b0)
-    (property "Reference" "Bd13" (at 59.69 172.72 0)
+    (property "Reference" "B13" (at 59.69 172.72 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 170.18 0)
@@ -2729,7 +2729,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd13") (unit 1)
+          (reference "B13") (unit 1)
         )
       )
     )
@@ -2765,7 +2765,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 121.92 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 3935b24d-8794-4712-a679-b217f6e80d0d)
-    (property "Reference" "Bd3" (at 59.69 121.92 0)
+    (property "Reference" "B3" (at 59.69 121.92 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 119.38 0)
@@ -2781,7 +2781,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd3") (unit 1)
+          (reference "B3") (unit 1)
         )
       )
     )
@@ -2814,7 +2814,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 133.35 35.56 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 3adf6952-6f12-4b6f-be2c-8793b3f27ad3)
-    (property "Reference" "D4" (at 135.89 35.56 0)
+    (property "Reference" "AD4" (at 135.89 35.56 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 133.35 33.02 0)
@@ -2830,7 +2830,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "D4") (unit 1)
+          (reference "AD4") (unit 1)
         )
       )
     )
@@ -2839,7 +2839,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 147.32 81.28 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 3c816d4d-c1cc-4646-9457-717fbb089926)
-    (property "Reference" "B13" (at 144.78 81.28 0)
+    (property "Reference" "AB13" (at 144.78 81.28 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 147.32 78.74 0)
@@ -2855,7 +2855,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "B13") (unit 1)
+          (reference "AB13") (unit 1)
         )
       )
     )
@@ -2864,7 +2864,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 147.32 60.96 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 3faa1290-3596-4533-8d81-831d184c6605)
-    (property "Reference" "B9" (at 144.78 60.96 0)
+    (property "Reference" "AB9" (at 144.78 60.96 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 147.32 58.42 0)
@@ -2880,7 +2880,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "B9") (unit 1)
+          (reference "AB9") (unit 1)
         )
       )
     )
@@ -2917,7 +2917,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 133.35 81.28 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 418a8f65-742f-41a8-a5fc-a50f5a0fb7df)
-    (property "Reference" "D13" (at 135.89 81.28 0)
+    (property "Reference" "AD13" (at 135.89 81.28 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 133.35 78.74 0)
@@ -2933,7 +2933,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "D13") (unit 1)
+          (reference "AD13") (unit 1)
         )
       )
     )
@@ -2942,7 +2942,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 157.48 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 46f0eea4-71d1-4581-a836-465ecbd74799)
-    (property "Reference" "Dd10" (at 53.34 157.48 0)
+    (property "Reference" "D10" (at 53.34 157.48 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 154.94 0)
@@ -2958,7 +2958,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd10") (unit 1)
+          (reference "D10") (unit 1)
         )
       )
     )
@@ -2967,7 +2967,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 132.08 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 4becb319-0779-417c-8421-4bbca787950d)
-    (property "Reference" "Dd5" (at 53.34 132.08 0)
+    (property "Reference" "D5" (at 53.34 132.08 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 129.54 0)
@@ -2983,7 +2983,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd5") (unit 1)
+          (reference "D5") (unit 1)
         )
       )
     )
@@ -3072,7 +3072,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 147.32 55.88 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 59ba44d0-dc2d-45db-aef4-79a2806ac035)
-    (property "Reference" "B8" (at 144.78 55.88 0)
+    (property "Reference" "AB8" (at 144.78 55.88 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 147.32 53.34 0)
@@ -3088,7 +3088,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "B8") (unit 1)
+          (reference "AB8") (unit 1)
         )
       )
     )
@@ -3097,7 +3097,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 116.84 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 5d066a18-bece-4f45-8db8-eb0ee85c30a6)
-    (property "Reference" "Dd2" (at 53.34 116.84 0)
+    (property "Reference" "D2" (at 53.34 116.84 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 114.3 0)
@@ -3113,7 +3113,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd2") (unit 1)
+          (reference "D2") (unit 1)
         )
       )
     )
@@ -3122,7 +3122,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 116.84 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 5d8ac6ec-f449-4251-bbd2-f796eadeb323)
-    (property "Reference" "Bd2" (at 59.69 116.84 0)
+    (property "Reference" "B2" (at 59.69 116.84 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 114.3 0)
@@ -3138,7 +3138,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd2") (unit 1)
+          (reference "B2") (unit 1)
         )
       )
     )
@@ -3147,7 +3147,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 147.32 35.56 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 64d3161c-f470-4910-8293-9c9bc72b1a3d)
-    (property "Reference" "B4" (at 144.78 35.56 0)
+    (property "Reference" "AB4" (at 144.78 35.56 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 147.32 33.02 0)
@@ -3163,7 +3163,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "B4") (unit 1)
+          (reference "AB4") (unit 1)
         )
       )
     )
@@ -3172,7 +3172,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 147.32 30.48 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 688e6f47-010e-456e-b48a-5be80d334bed)
-    (property "Reference" "B3" (at 144.78 30.48 0)
+    (property "Reference" "AB3" (at 144.78 30.48 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 147.32 27.94 0)
@@ -3188,7 +3188,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "B3") (unit 1)
+          (reference "AB3") (unit 1)
         )
       )
     )
@@ -3223,7 +3223,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 127 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 6cde71a7-ed92-4370-bc3d-ca10de868bc3)
-    (property "Reference" "Bd4" (at 59.69 127 0)
+    (property "Reference" "B4" (at 59.69 127 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 124.46 0)
@@ -3239,7 +3239,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd4") (unit 1)
+          (reference "B4") (unit 1)
         )
       )
     )
@@ -3338,7 +3338,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 133.35 60.96 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 7505d59e-1dc6-4a50-ba9a-b335f2f64e9f)
-    (property "Reference" "D9" (at 135.89 60.96 0)
+    (property "Reference" "AD9" (at 135.89 60.96 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 133.35 58.42 0)
@@ -3354,7 +3354,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "D9") (unit 1)
+          (reference "AD9") (unit 1)
         )
       )
     )
@@ -3389,7 +3389,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 133.35 66.04 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 7de6e1c4-5350-4075-b285-62d1187044de)
-    (property "Reference" "D10" (at 135.89 66.04 0)
+    (property "Reference" "AD10" (at 135.89 66.04 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 133.35 63.5 0)
@@ -3405,7 +3405,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "D10") (unit 1)
+          (reference "AD10") (unit 1)
         )
       )
     )
@@ -3414,7 +3414,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 167.64 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 8030e033-9cd5-425f-8b01-b45716025505)
-    (property "Reference" "Bd12" (at 59.69 167.64 0)
+    (property "Reference" "B12" (at 59.69 167.64 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 165.1 0)
@@ -3430,7 +3430,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd12") (unit 1)
+          (reference "B12") (unit 1)
         )
       )
     )
@@ -3464,7 +3464,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 133.35 50.8 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 8d03c59e-4e81-4540-a48f-b9e87291ed5e)
-    (property "Reference" "D7" (at 135.89 50.8 0)
+    (property "Reference" "AD7" (at 135.89 50.8 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 133.35 48.26 0)
@@ -3480,7 +3480,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "D7") (unit 1)
+          (reference "AD7") (unit 1)
         )
       )
     )
@@ -3489,7 +3489,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 162.56 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 96cd966f-5295-4614-b22b-2235ff456e96)
-    (property "Reference" "Dd11" (at 53.34 162.56 0)
+    (property "Reference" "D11" (at 53.34 162.56 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 160.02 0)
@@ -3505,7 +3505,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd11") (unit 1)
+          (reference "D11") (unit 1)
         )
       )
     )
@@ -3578,7 +3578,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 172.72 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 9bddbfbf-6407-4260-8392-d82268f7219a)
-    (property "Reference" "Dd13" (at 53.34 172.72 0)
+    (property "Reference" "D13" (at 53.34 172.72 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 170.18 0)
@@ -3594,7 +3594,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd13") (unit 1)
+          (reference "D13") (unit 1)
         )
       )
     )
@@ -3603,7 +3603,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 142.24 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid a011322c-3d3f-448a-b1cb-09e8a56e5bd5)
-    (property "Reference" "Bd7" (at 59.69 142.24 0)
+    (property "Reference" "B7" (at 59.69 142.24 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 139.7 0)
@@ -3619,7 +3619,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd7") (unit 1)
+          (reference "B7") (unit 1)
         )
       )
     )
@@ -3653,7 +3653,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 147.32 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid a94637f6-a7f7-48d6-b0aa-83d2b7b37858)
-    (property "Reference" "Bd8" (at 59.69 147.32 0)
+    (property "Reference" "B8" (at 59.69 147.32 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 144.78 0)
@@ -3669,7 +3669,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd8") (unit 1)
+          (reference "B8") (unit 1)
         )
       )
     )
@@ -3704,7 +3704,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 133.35 25.4 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid b3f3053a-645e-4b9d-986e-fc67539f36f1)
-    (property "Reference" "D2" (at 135.89 25.4 0)
+    (property "Reference" "AD2" (at 135.89 25.4 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 133.35 22.86 0)
@@ -3720,7 +3720,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "D2") (unit 1)
+          (reference "AD2") (unit 1)
         )
       )
     )
@@ -3729,7 +3729,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 152.4 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid b7909635-6990-4c8b-9f5f-728a3f24f296)
-    (property "Reference" "Dd9" (at 53.34 152.4 0)
+    (property "Reference" "D9" (at 53.34 152.4 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 149.86 0)
@@ -3745,7 +3745,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd9") (unit 1)
+          (reference "D9") (unit 1)
         )
       )
     )
@@ -3754,7 +3754,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 147.32 66.04 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid bbd10795-30bf-4718-82c6-a394eb28a5fb)
-    (property "Reference" "B10" (at 144.78 66.04 0)
+    (property "Reference" "AB10" (at 144.78 66.04 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 147.32 63.5 0)
@@ -3770,7 +3770,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "B10") (unit 1)
+          (reference "AB10") (unit 1)
         )
       )
     )
@@ -3779,7 +3779,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 147.32 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid cd85feda-b665-468b-8292-3cd25927f6c8)
-    (property "Reference" "Dd8" (at 53.34 147.32 0)
+    (property "Reference" "D8" (at 53.34 147.32 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 144.78 0)
@@ -3795,7 +3795,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd8") (unit 1)
+          (reference "D8") (unit 1)
         )
       )
     )
@@ -3804,7 +3804,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 167.64 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid d0b94c98-b705-466b-b4b9-050218e0f481)
-    (property "Reference" "Dd12" (at 53.34 167.64 0)
+    (property "Reference" "D12" (at 53.34 167.64 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 165.1 0)
@@ -3820,7 +3820,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd12") (unit 1)
+          (reference "D12") (unit 1)
         )
       )
     )
@@ -3829,7 +3829,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 137.16 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid d8268ce2-3d30-476c-9b01-d35c93a02f93)
-    (property "Reference" "Dd6" (at 53.34 137.16 0)
+    (property "Reference" "D6" (at 53.34 137.16 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 134.62 0)
@@ -3845,7 +3845,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd6") (unit 1)
+          (reference "D6") (unit 1)
         )
       )
     )
@@ -3854,7 +3854,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 157.48 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid de5bbb77-f713-414e-a139-f77826b3e2dd)
-    (property "Reference" "Bd10" (at 59.69 157.48 0)
+    (property "Reference" "B10" (at 59.69 157.48 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 154.94 0)
@@ -3870,7 +3870,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd10") (unit 1)
+          (reference "B10") (unit 1)
         )
       )
     )
@@ -3879,7 +3879,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 147.32 25.4 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid decdef48-655c-48bb-a9e9-700450bb9bc2)
-    (property "Reference" "B2" (at 144.78 25.4 0)
+    (property "Reference" "AB2" (at 144.78 25.4 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 147.32 22.86 0)
@@ -3895,7 +3895,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "B2") (unit 1)
+          (reference "AB2") (unit 1)
         )
       )
     )
@@ -3904,7 +3904,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 133.35 45.72 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid e12d3953-ecd8-421d-bd2d-66e8f089789d)
-    (property "Reference" "D6" (at 135.89 45.72 0)
+    (property "Reference" "AD6" (at 135.89 45.72 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 133.35 43.18 0)
@@ -3920,7 +3920,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "D6") (unit 1)
+          (reference "AD6") (unit 1)
         )
       )
     )
@@ -3929,7 +3929,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 133.35 71.12 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid e48a42d7-479e-47b6-90b1-955ec7e0ac83)
-    (property "Reference" "D11" (at 135.89 71.12 0)
+    (property "Reference" "AD11" (at 135.89 71.12 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 133.35 68.58 0)
@@ -3945,7 +3945,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "D11") (unit 1)
+          (reference "AD11") (unit 1)
         )
       )
     )
@@ -3980,7 +3980,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 133.35 40.64 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid e888f444-9b48-465c-978b-23940d0abd4f)
-    (property "Reference" "D5" (at 135.89 40.64 0)
+    (property "Reference" "AD5" (at 135.89 40.64 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 133.35 38.1 0)
@@ -3996,7 +3996,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "D5") (unit 1)
+          (reference "AD5") (unit 1)
         )
       )
     )
@@ -4005,7 +4005,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 147.32 76.2 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid ef129c4d-ab6c-404e-875e-ad965c42340c)
-    (property "Reference" "B12" (at 144.78 76.2 0)
+    (property "Reference" "AB12" (at 144.78 76.2 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 147.32 73.66 0)
@@ -4021,7 +4021,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "B12") (unit 1)
+          (reference "AB12") (unit 1)
         )
       )
     )
@@ -4030,7 +4030,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 121.92 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid efacc3b1-2110-45f9-b8b9-10ad28accc3a)
-    (property "Reference" "Dd3" (at 53.34 121.92 0)
+    (property "Reference" "D3" (at 53.34 121.92 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 119.38 0)
@@ -4046,7 +4046,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd3") (unit 1)
+          (reference "D3") (unit 1)
         )
       )
     )
@@ -4055,7 +4055,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 162.56 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f45ec02b-4efc-41dc-9421-8158e2baf973)
-    (property "Reference" "Bd11" (at 59.69 162.56 0)
+    (property "Reference" "B11" (at 59.69 162.56 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 160.02 0)
@@ -4071,7 +4071,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd11") (unit 1)
+          (reference "B11") (unit 1)
         )
       )
     )
@@ -4080,7 +4080,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 62.23 137.16 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f9eb7c38-a16b-4530-8ca6-d3f15e32b8f0)
-    (property "Reference" "Bd6" (at 59.69 137.16 0)
+    (property "Reference" "B6" (at 59.69 137.16 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 62.23 134.62 0)
@@ -4096,7 +4096,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Bd6") (unit 1)
+          (reference "B6") (unit 1)
         )
       )
     )
@@ -4105,7 +4105,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 50.8 127 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid fa52174c-f6bd-4ec3-a11d-cdb070deecbe)
-    (property "Reference" "Dd4" (at 53.34 127 0)
+    (property "Reference" "D4" (at 53.34 127 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 50.8 124.46 0)
@@ -4121,7 +4121,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "Dd4") (unit 1)
+          (reference "D4") (unit 1)
         )
       )
     )
@@ -4180,7 +4180,7 @@
   (symbol (lib_id "Connector:Conn_01x01_Pin") (at 147.32 50.8 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid fded7d71-8619-4df8-8316-7b2796245d46)
-    (property "Reference" "B7" (at 144.78 50.8 0)
+    (property "Reference" "AB7" (at 144.78 50.8 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "Conn_01x01_Pin" (at 147.32 48.26 0)
@@ -4196,7 +4196,7 @@
     (instances
       (project "2310interface"
         (path "/d55f571a-70eb-468b-b895-7624624d448f"
-          (reference "B7") (unit 1)
+          (reference "AB7") (unit 1)
         )
       )
     )
