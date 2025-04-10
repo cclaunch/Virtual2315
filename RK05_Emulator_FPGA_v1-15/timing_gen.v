@@ -51,6 +51,7 @@ begin : COUNTERS // block name
     data_pulse  <= (half_bit > 8'd12) && data_phase;
 
     usec_counter <= (usec_counter == 7'd1) ? `USEC_LOAD_VALUE : usec_counter - 1; // for divide by 40, if counter == 1 then load 40
+
     clkenbl_1usec <= (usec_counter == 7'd1);
   end
 end // End of Block COUNTERS

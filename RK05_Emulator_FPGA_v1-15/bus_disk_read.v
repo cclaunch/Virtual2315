@@ -105,7 +105,7 @@ begin : DISKREAD // block name
                                         : read_tick_counter - 1) 
                                 : read_tick_counter);
 
-    // turn on read indicator 15 of 16 sector pulses
+    // turn on read indicator 15 of 16 sector pulses (150 ms)
     read_indicator <= (read_tick_counter != 0);
 
     case(bus_read_state)

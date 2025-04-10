@@ -117,7 +117,6 @@ module V2315CF (
     
 // Tester Outputs, new in Emulator v1 hardware
     output wire TESTER_OUTPUT_3_L, // this is pin 45
-
     output wire Servo_Pulse_FPGA_pin,   // this is pin 73
     output wire SPARE_PIO1_24,      // this is pin 74
     output wire SELECTED_RDY_LED_N, // this is pin 75
@@ -668,6 +667,10 @@ seek_to_cylinder i_seek_to_cylinder (
     .BUS_10_20_L (BUS_10_20_L),
     .clkenbl_1usec (clkenbl_1usec),
     .clkenbl_sector (clkenbl_sector),
+    .Cart_Ready (Cart_Ready),
+    .real_drive (real_drive),
+    .BUS_HOME_DRIVE_L (BUS_HOME_DRIVE_L),
+    .BUS_ACCESS_RDY_DRIVE_H (BUS_ACCESS_RDY_DRIVE_H),
 
     // Outputs
     .Cylinder_Address (Cylinder_Address),

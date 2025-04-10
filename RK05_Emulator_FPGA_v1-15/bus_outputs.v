@@ -75,9 +75,6 @@ assign Selected_Ready =           real_drive == 1'b1
                                                 ? 1'b1
                                                 : Selected & Cart_Ready & ~Fault_Latch;
 
-// Can keep or remove the inversion in front of the following equations, depending on
-// the specific type of SN7545x driver that is installed on the circuit board.
-//
 
 // Signals that don't depend on real_drive status
 assign BUS_10_20_DRIVE_L =                      (BUS_10_20_CTRL_L | ~Selected_Ready);
