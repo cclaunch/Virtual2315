@@ -88,8 +88,8 @@ begin
     end
     else begin
 
-        // we are ready and we have a rising edge request for a seek
-        strobe_selected_ready <= ~meta_bus_strobe[3] && meta_bus_strobe[2] && Selected_Ready;
+        // we are ready and we have a request for a seek
+        strobe_selected_ready <= meta_bus_strobe[3] && Selected_Ready;
 
         // when access go is blipped, count for 15 ms worth of time
         seek_timer <=  (strobe_selected_ready && seek_timer == 0)
