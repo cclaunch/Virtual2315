@@ -549,6 +549,7 @@ bus_outputs i_bus_outputs (
     .BUS_90SEC_RELAY_EMUL_L (BUS_90SEC_RELAY_EMUL_L),
     .BUS_RD_DATA_H (BUS_RD_DATA_H),
     .BUS_RD_CLK_H (BUS_RD_CLK_H),
+    .clock (clock),
 
     // Outputs
     .BUS_10_20_DRIVE_L (BUS_10_20_DRIVE_L),
