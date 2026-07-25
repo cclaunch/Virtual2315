@@ -56,7 +56,7 @@ which will ask you for the source file (xxxxx.dsk) and then a location
 (on the PC) where the converted file should be stored. The file will also
 have a .dsk suffix, but it is in the 1130 simulator (simH) format. 
 
-You can use the listsector.exe program to display the contents of a sector
+You can use the showsector.exe program to display the contents of a sector
 of the disk image - from a file in the V2315CF format. 
 
 The converted file can be used with an IBM 1130 simulator to access with
