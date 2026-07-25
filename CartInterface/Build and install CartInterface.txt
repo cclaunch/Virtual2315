@@ -1,0 +1,79 @@
+CartInterface tool
+
+BUILD
+
+This is built using:
+   Raspberry Pi PICO
+   2.54mm 2x4 header socket
+   four 10K resistors
+   perfboard or similar substitute for a breadboard
+   small project box
+
+The code is built and uploaded to the PICO using the Arduino IDE.
+
+You must have the correct board files installed, using the 
+Board Manager. It is Earle F Philhower III's Raspberry Pi Pico/RP2040/RP2350 
+which allows you to select the board as Raspberry Pi Pico/RP2040/RP2350
+with the subchoice of Raspberry Pi Pico
+
+This board file contains the Adafruit TinyUSB library thus you can't also 
+have the Adafruit library itself installed. Check in the library manager
+for Adafruit TinyUSB Library and remove it if it is installed.
+
+Finally, after you set the IDE to the Raspberry Pi Pico, you select on the 
+Tools menu of the IDE the choice of USB stack to be Adafruit Tiny USB
+
+Holding down the white BOOTSEL button on the PICO, plug the USB cable into
+the PC running the Arduino IDE. A virtual disk opens up with INFO_UF2.TXT 
+and INDEX.HTM files visible. Now you push the Upload button on the IDE to
+have it compile the code and load it onto the PICO. 
+
+Disconnect the PICO and install it on the perfboard to complete the wiring
+between the PICO, four resistors and the header socket.
+
+The KiCAD schematic shows the wiring of the perfboard. You are looking from
+the top in the schematic, with the 2x4 socket mounted at the top and the 
+PICO mounted below so that the USB cable will exit downward when looking
+at the perfboard.
+
+For convenience, put this in a project box with the 2x4 header socket at the 
+front top and the USB cable exiting from the bottom of the box. 
+
+USE
+
+Holding the project box so that the 2x4 header socket is at the top when
+you look at it, plug in the mini cartridge with the image of the 2315
+(PCB) facing upwards. 
+
+Take the USB cable and plug it into a PC. The drive should open showing the
+FAT32 file system on the microSD card and the file which contains the virtual
+2315 cartridge image. It will have a name like xxxxx.dsk and is formatted 
+for the Virtual 2315 Cartridge Facility (V2315CF) to use.
+
+That file can be copied over to the PC where you can convert it to the
+file format used by IBM 1130 simulators - the application is convert2315.exe 
+which will ask you for the source file (xxxxx.dsk) and then a location 
+(on the PC) where the converted file should be stored. The file will also
+have a .dsk suffix, but it is in the 1130 simulator (simH) format. 
+
+You can use the listsector.exe program to display the contents of a sector
+of the disk image - from a file in the V2315CF format. 
+
+The converted file can be used with an IBM 1130 simulator to access with
+1130 software. A disk file that is changed on the simulator, or any valid
+2315 disk image in 1130 simulator format, can be converted back to the
+V2315CF format using the convert1130.exe application, selecting the
+1130 format file first and then choosing a name for the converted
+V2315CF format file second. 
+
+The file in V2315CF format can be copied onto the mounted disk 
+from the CartInterface box to replace the  prior disk file there. 
+You can only have one xxxxx.dsk file on the microSD card as the 
+V2315CF will just open the first one it finds, thus if the name
+has changed then you must delete the old xxxxx.dsk file on the
+mini cartridge. 
+
+Use the Eject function of Windows to properly unmount the microSD
+card file system before unplugging it. The mini cartridge can
+now be plugged into the V2315CF main box and loaded in order
+for the physical IBM 1130 system to access the new disk image. 
