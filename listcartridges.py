@@ -73,6 +73,7 @@ if folder_path:
     os.chdir(folder_path) # Change the current directory to the selected folder
 else:
     print("No folder selected.")
+    input("enter to exit")
     sys.exit(1)
 print ('')
 
@@ -80,6 +81,7 @@ try:
     files = os.listdir(folder_path)
 except FileNotFoundError:
     print("Directory not selected.")
+    input("enter to exit")
     sys.exit(1)
 
 print("Virtual 2315 Cartridge files:")
@@ -91,4 +93,5 @@ for file in files:
     
 print ('')
 print ('End of Listing')
+input("enter to exit")
 sys.exit(0)

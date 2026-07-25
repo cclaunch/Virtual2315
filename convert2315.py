@@ -48,12 +48,14 @@ print('')
 sf = select_file()
 if (sf == None):
     print('No input file selected, quitting')
+    input("enter to exit")
     sys.exit(1)
 
 sf.seek(0, 2)
 if (sf.tell() != 1042973):
     print('File is ',sf.tell(),' not the correct size, quitting')
     sf.close()
+    input("enter to exit")
     sys.exit(1)
 sf.seek(0, 0)
 
@@ -61,6 +63,7 @@ ef = save_file()
 if (ef == None):
     print('No output file selected, quitting')
     sf.close()
+    input("enter to exit")
     sys.exit(1)
 
 header = sf.read(1)
@@ -68,6 +71,7 @@ if (header != b'\x89'):
     print ('wrong magic word in file', header, ', quitting')
     sf.close()
     ef.close()
+    input("enter to exit")
     sys.exit(1)
 
 header = sf.read(9)
@@ -75,6 +79,7 @@ if (header != b'2315\r\n\x1a\x00\x00'):
     print('The header we read was', header, ', not the correct one, quitting')
     sf.close()
     ef.close()
+    input("enter to exit")
     sys.exit(1)
     
 header = sf.read(4)
@@ -82,6 +87,7 @@ if (header != b'1.3\x00'):
     print('wrong version', header, ', quitting')
     sf.close()
     ef.close()
+    input("enter to exit")
     sys.exit(1)
     
 header = sf.read(11)
@@ -128,3 +134,5 @@ print ('Conversion complete')
 print('')
 print('Put the output file on a microSD card and')
 print('insert it into the Virtual 2315 Cartridge Facility')
+input("enter to exit")
+sys.exit(0)

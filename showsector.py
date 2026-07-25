@@ -38,12 +38,14 @@ try:
     sf = select_file()
     if (sf == None):
         print('No input file selected, quitting')
+        input("enter to exit")
         sys.exit(1)
 
     sf.seek(0, 2)
     if (sf.tell() != (1042973)):
         print('File is not the correct size, quitting')
         sf.close()
+        input("enter to exit")
         sys.exit(1)
     sf.seek(0, 0)
 
@@ -51,18 +53,21 @@ try:
     if (header != b'\x89'):
         print ('wrong magic word in file', header, ', quitting')
         sf.close()
+        input("enter to exit")
         sys.exit(1)
 
     header = sf.read(9)
     if (header != b'2315\r\n\x1a\x00\x00'):
         print('The header we read was', header, ', not the correct one, quitting')
         sf.close()
+        input("enter to exit")
         sys.exit(1)
         
     header = sf.read(4)
     if (header != b'1.3\x00'):
         print('wrong version', header, ', quitting')
         sf.close()
+        input("enter to exit")
         sys.exit(1)
         
     header = sf.read(11)
@@ -111,16 +116,19 @@ try:
     if (sector < 0 or sector > 3):
         print('Invalid sector number (0 to 3)')
         sf.close()
+        input("enter to exit")
         sys.exit(1)
 
     if (head < 0 or head > 1):
         print('Invalid head number (0 or 1)')
         sf.close()
+        input("enter to exit")
         sys.exit(1)
 
     if (cyl < 0 or cyl > 202):
         print('Invalid cylinder number (0 to 202)')
         sf.close()
+        input("enter to exit")
         sys.exit(1)
 
     skip = (cyl*8) + (head*4) + sector
@@ -138,7 +146,9 @@ try:
             print(f"{addr:#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x"))
             
     sf.close()
+    input("enter to exit")
+    sys.exit(0)
 
 except SystemExit:
-    print('Quitting with error')
+    print('Quitting')
     pass

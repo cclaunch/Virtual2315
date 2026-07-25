@@ -55,12 +55,14 @@ datestring = f"{datetuple[0]:4d}-{datetuple[1]:02d}-{datetuple[2]:02d} {datetupl
 sf = select_file()
 if (sf == None):
     print('No input file selected, quitting')
+    input("enter to exit")
     sys.exit(1)
 
 sf.seek(0, 2)
 if (sf.tell() != (203*8*321*2)):
     print('File is not the correct size, quitting')
     sf.close()
+    input("enter to exit")
     sys.exit(1)
 sf.seek(0, 0)
 
@@ -68,6 +70,7 @@ ef = save_file()
 if (ef == None):
     print('No output file selected, quitting')
     sf.close()
+    input("enter to exit")
     sys.exit(1)
 
 #                                             magic number 10 bytes null terminated 8b string
@@ -158,3 +161,5 @@ print ('conversion complete')
 print('')
 print('Put the output file on a microSD card and')
 print('insert it into the Virtual 2315 Cartridge Facility')
+input("enter to exit")
+sys.exit(0)
