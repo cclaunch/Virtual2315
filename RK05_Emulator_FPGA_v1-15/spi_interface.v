@@ -40,6 +40,7 @@ module spi_interface(
     output reg Cart_Ready,               // disk contents have been copied from the microSD to the SDRAM.
     output reg Read_Only,                // CPU register that indicates no writeback of updates to cartridge at shutdown
     output reg Fault_Latch,              // combines faults detected in Pico handling uSD files plus drive fault
+    output reg Reset_Cylinder,           // drive powered down causes arm retract to cylinder 0
     output reg interface_test_mode,
     output reg command_interrupt,
     output reg Servo_Pulse_FPGA
@@ -78,8 +79,7 @@ SB_DFFS SPI_DFFS_inst (
 // produce inputs to registers we will write up to the Pico when it does a read of these reg address
 // these readback have diff # assigned to them, thus reading 00 is done with reg address A0
 // others just read out internal state, eg. 81 grabs current cylinder address
-assign muxed_read_data = (serialaddress == 8'h80) ? 8'h00 : 
-                          ((serialaddress == 8'h81) ? Cylinder_Address[7:0] :
+assign muxed_read_data = (serialaddress == 8'h81) ? Cylinder_Address[7:0] :
                            ((serialaddress == 8'h82) ? {2'b0, Sector_Address[1:0], operation_id[1:0], 
                                                         Selected_Ready, Head_Select} :
                             ((serialaddress == 8'h83) ? {8'h00} :
@@ -104,7 +104,7 @@ assign muxed_read_data = (serialaddress == 8'h80) ? 8'h00 :
                                     ? dram_readdata[15:8] 
                                     : dram_readdata[7:0])
                                   : 8'b0
-                                )))))));
+                                ))))));
 
 assign pre_spi_miso = ((spicount == 5'd7) & muxed_read_data[7]) | 
                       ((spicount == 5'd8) & muxed_read_data[6]) |
@@ -149,6 +149,7 @@ begin : HSCLOCKFUNCTIONS // block name
     frdlyd <= 1'b0;
     Read_Only <= 1'b0;
     Fault_Latch <= 1'b0;
+    Reset_Cylinder <= 1'b0;
     load_address_spi <= 1'b0;
     dramwrite_lowhigh <= 1'b0;
     dramread_lowhigh <= 1'b0;
@@ -188,6 +189,14 @@ begin : HSCLOCKFUNCTIONS // block name
                      : Fault_Latch;
 
   //
+  // below for register address 0x00 when written by the Pico
+  //
+    // x10 is Cart Ready set/clear by Pico
+    Cart_Ready <=        ((serialaddress == 8'h00) && ~metaspi[2] && metaspi[3]) 
+                 ? spi_serpar_reg[4]   
+                 : Cart_Ready; 
+
+  //
   // below for register x04 which records the read only condition, controlling the LED
   //
     //toggle_wp is separated only so the code is more readable
@@ -201,21 +210,13 @@ begin : HSCLOCKFUNCTIONS // block name
     Read_Only <= (Read_Only | ((toggle_wp & ~Read_Only))) & ~((toggle_wp & Read_Only));
  
   //
-  // register address 0x00 when written by the Pico
-  //
-    // x10 is Cart Ready set/clear by Pico
-    Cart_Ready <=        ((serialaddress == 8'h00) && ~metaspi[2] && metaspi[3]) 
-                 ? spi_serpar_reg[4]   
-                 : Cart_Ready; 
-
-  //
-  // register address 0x05 written by Pico
+  // below for register address 0x05 written by Pico
   //
     // x05 sets memory address via three sequential messages
     load_address_spi   <= (serialaddress == 8'h05) & ~metaspi[2] & metaspi[3]; // command to load 8 bits of address from SPI
 
   //
-  // register address 0x06 written by Pico
+  // below for register address 0x06 written by Pico
   //
     // register address 0x06 written by Pico sends data word via pair of sequential messages
     dram_writedata_spi[7:0] <=  ((serialaddress == 8'h06) && ~metaspi[2] && metaspi[3]) 
@@ -227,7 +228,16 @@ begin : HSCLOCKFUNCTIONS // block name
     dram_write_enbl_spi <=       (serialaddress == 8'h06) & ~metaspi[2] & metaspi[3] & dramwrite_lowhigh;
 
   //
-  // register 0x20 used for test mode
+  // below for register address 0x10 written by Pico
+  // used to zero the cylinder address
+  //
+    // x10 sets reset flag on or off
+    Reset_Cylinder  <= (serialaddress == 8'h10) & ~metaspi[2] & metaspi[3]
+                       ? spi_serpar_reg[0]
+                       : Reset_Cylinder;
+
+  //
+  // below for register 0x20 used for test mode
   //
     // register address 0x20 written by Pico
     interface_test_mode <= ((serialaddress == 8'h20) && ~metaspi[2] && metaspi[3]) 
@@ -235,7 +245,7 @@ begin : HSCLOCKFUNCTIONS // block name
                          : interface_test_mode;
 
   //
-  // register 0x88 retrieves words from memory via pair of sequential messages
+  // below for register 0x88 retrieves words from memory via pair of sequential messages
   //
     // register address 0x88 written by Pico triggers read on second (low) 88 message
     // dram_readdata[15:0] always has the data ready that was read at the dram_address.

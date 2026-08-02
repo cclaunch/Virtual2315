@@ -15,7 +15,7 @@ module bus_outputs (
     input wire Selected,                  // active high signal indicates that the drive is selected
     input wire Fault_Latch,               // included for future support. Software will always write zero to Fault_Latch.
     input wire Cart_Ready,                // PICO says we are ready to do input output operations
-    input wire BUS_ACCESS_RDY_DRIVE_H,    // Seek ready and on-cylinder
+//    input wire BUS_ACCESS_RDY_DRIVE_H,    // Seek ready and on-cylinder
     input wire BUS_HOME_DRIVE_L,          // indicates at track zero
     input wire BUS_WT_CLOCKB_DRIVE_L,     // 720 KHz clock to control writes
     input wire BUS_SECTOR_DRIVE_L,        // 160 us negative pulse each time a sector slot passes the transducer
@@ -71,23 +71,22 @@ module bus_outputs (
 
 //============================ Local Data =========================================
 
-reg [3:0]  metaBUS_10_20_CTRL_L; // deal with metastability
-reg [3:0]  metaBUS_ACC_GO_DRIVE_CTRL_L; // deal with metastability
-reg [3:0]  metaBUS_ACC_REV_CTRL_L; // deal with metastability
-reg [3:0]  metaBUS_HEAD_SELECT_CTRL_L; // deal with metastability
-reg [3:0]  metaBUS_RD_GATE_CTRL_L; // deal with metastability
-reg [3:0]  metaBUS_WT_GATE_CTRL_L; // deal with metastability
-reg [3:0]  metaBUS_WT_DATA_CLK_CTRL_L; // deal with metastability
-reg [3:0]  metaBUS_RD_DATA_H; // deal with metastability
-reg [3:0]  metaBUS_RD_CLK_H; // deal with metastability
-reg [3:0]  metaBUS_SECTOR_DRIVE_L; // deal with metastability
-reg [3:0]  metaBUS_INDEX_DRIVE_L; // deal with metastability
-reg [3:0]  metaBUS_ACCESS_RDY_DRIVE_H; // deal with metastability
-reg [3:0]  metaBUS_HOME_DRIVE_L; // deal with metastability
+reg [3:0]  metaBUS_10_20_CTRL_L;          // deal with metastability
+reg [3:0]  metaBUS_ACC_GO_DRIVE_CTRL_L;   // deal with metastability
+reg [3:0]  metaBUS_ACC_REV_CTRL_L;        // deal with metastability
+reg [3:0]  metaBUS_HEAD_SELECT_CTRL_L;    // deal with metastability
+reg [3:0]  metaBUS_RD_GATE_CTRL_L;        // deal with metastability
+reg [3:0]  metaBUS_WT_GATE_CTRL_L;        // deal with metastability
+reg [3:0]  metaBUS_WT_DATA_CLK_CTRL_L;    // deal with metastability
+reg [3:0]  metaBUS_RD_DATA_H;             // deal with metastability
+reg [3:0]  metaBUS_RD_CLK_H;              // deal with metastability
+reg [3:0]  metaBUS_SECTOR_DRIVE_L;        // deal with metastability
+reg [3:0]  metaBUS_INDEX_DRIVE_L;         // deal with metastability
+reg [3:0]  metaBUS_HOME_DRIVE_L;          // deal with metastability
 reg [3:0]  metaBUS_WRITE_SEL_ERR_DRIVE_L; // deal with metastability
-reg [3:0]  metaBUS_90S_RELAY_DRIVE_L; // deal with metastability
-reg [3:0]  metaBUS_WT_CLOCKB_DRIVE_L; // deal with metastability
-reg [3:0]  metaBUS_FILE_READY_DRIVE_L; // deal with metastability
+reg [3:0]  metaBUS_90S_RELAY_DRIVE_L;     // deal with metastability
+reg [3:0]  metaBUS_WT_CLOCKB_DRIVE_L;     // deal with metastability
+reg [3:0]  metaBUS_FILE_READY_DRIVE_L;    // deal with metastability
 
 //============================ Start of Code =========================================
 
@@ -105,69 +104,108 @@ begin : BUSOUTPUTS // block name
     metaBUS_RD_CLK_H[3:0]              <= {metaBUS_RD_CLK_H[2:0], BUS_RD_CLK_H};
     metaBUS_SECTOR_DRIVE_L[3:0]        <= {metaBUS_SECTOR_DRIVE_L[2:0], BUS_SECTOR_DRIVE_L};
     metaBUS_INDEX_DRIVE_L[3:0]         <= {metaBUS_INDEX_DRIVE_L[2:0], BUS_INDEX_DRIVE_L};
-    metaBUS_ACCESS_RDY_DRIVE_H[3:0]    <= {metaBUS_ACCESS_RDY_DRIVE_H[2:0], BUS_ACCESS_RDY_DRIVE_H};
     metaBUS_HOME_DRIVE_L[3:0]          <= {metaBUS_HOME_DRIVE_L[2:0], BUS_HOME_DRIVE_L};
     metaBUS_WRITE_SEL_ERR_DRIVE_L[3:0] <= {metaBUS_WRITE_SEL_ERR_DRIVE_L[2:0], BUS_WRITE_SEL_ERR_DRIVE_L};
     metaBUS_90S_RELAY_DRIVE_L[3:0]     <= {metaBUS_90S_RELAY_DRIVE_L[2:0], BUS_90S_RELAY_DRIVE_L};
     metaBUS_WT_CLOCKB_DRIVE_L[3:0]     <= {metaBUS_WT_CLOCKB_DRIVE_L[2:0], BUS_WT_CLOCKB_DRIVE_L};
     metaBUS_FILE_READY_DRIVE_L[3:0]    <= {metaBUS_FILE_READY_DRIVE_L[2:0], BUS_FILE_READY_DRIVE_L};
 
-    // we are always selected. need cartridge loaded from SD card, 1130 controller indicating File Ready and no fault
+    // we are always selected. virtual mode needs cartridge loaded from SD card, 1130 controller indicating File Ready and no fault
     Selected_Ready                     <=   real_drive == 1'b1
                                                 ? 1'b1
                                                 : Selected & Cart_Ready & ~Fault_Latch;
 
-    // Signals that don't depend on real_drive status
-    BUS_10_20_DRIVE_L <=                      (metaBUS_10_20_CTRL_L[3] | ~Selected_Ready);
-    BUS_ACC_GO_DRIVE_DRIVE_L <=               (metaBUS_ACC_GO_DRIVE_CTRL_L[3] | ~Selected_Ready);
-    BUS_ACC_REV_DRIVE_L <=                    (metaBUS_ACC_REV_CTRL_L[3] | ~Selected_Ready);
-    BUS_HEAD_SELECT_DRIVE_L <=                (metaBUS_HEAD_SELECT_CTRL_L[3] | ~Selected_Ready);
-    BUS_RD_GATE_DRIVE_L <=                    (metaBUS_RD_GATE_CTRL_L[3] | ~Selected_Ready);
-    BUS_WT_GATE_DRIVE_L <=                    (metaBUS_WT_GATE_CTRL_L[3] | ~Selected_Ready);
-    BUS_WT_DATA_CLK_DRIVE_L <=                (metaBUS_WT_DATA_CLK_CTRL_L[3] | ~Selected_Ready);
-    BUS_RD_DATA_CTRL_L <=                     (~metaBUS_RD_DATA_H[3] | ~Selected_Ready);
-    BUS_RD_CLK_CTRL_L <=                      (~metaBUS_RD_CLK_H[3] | ~Selected_Ready);
-    BUS_ACC_GO_L  <=                          (metaBUS_ACC_GO_DRIVE_CTRL_L[3] | ~Selected_Ready);
-    BUS_ACC_REV_L <=                          (metaBUS_ACC_REV_CTRL_L[3] | ~Selected_Ready);
-    BUS_10_20_L <=                            (metaBUS_10_20_CTRL_L[3] | ~Selected_Ready);
-    BUS_SECTOR_L <=                           (metaBUS_SECTOR_DRIVE_L[3] | ~Selected_Ready);
-    BUS_INDEX_L <=                            (metaBUS_INDEX_DRIVE_L[3] | ~Selected_Ready);
-    BUS_WT_GATE_L <=                          (metaBUS_WT_GATE_CTRL_L[3] | ~Selected_Ready);
-    BUS_RD_GATE_L <=                          (metaBUS_RD_GATE_CTRL_L[3] | ~Selected_Ready);
-    BUS_HEAD_SELECT_L <=                      (metaBUS_HEAD_SELECT_CTRL_L[3] | ~Selected_Ready);
+    // Signals that don't depend on real_drive status, pass along to drive
+// the three here are replaced when we move to the electronic switch version
+// of the 2310 Interface Board
+//     from here
+    BUS_10_20_DRIVE_L              <=         (metaBUS_10_20_CTRL_L[3]);
+    BUS_ACC_GO_DRIVE_DRIVE_L       <=         (metaBUS_ACC_GO_DRIVE_CTRL_L[3]);
+    BUS_ACC_REV_DRIVE_L            <=         (metaBUS_ACC_REV_CTRL_L[3]);
+//     to here
+    BUS_HEAD_SELECT_DRIVE_L        <=         (metaBUS_HEAD_SELECT_CTRL_L[3]);
+    BUS_RD_GATE_DRIVE_L            <=         (metaBUS_RD_GATE_CTRL_L[3]);
+    BUS_WT_GATE_DRIVE_L            <=         (metaBUS_WT_GATE_CTRL_L[3]);
+    BUS_WT_DATA_CLK_DRIVE_L        <=         (metaBUS_WT_DATA_CLK_CTRL_L[3]);
+    BUS_RD_DATA_CTRL_L             <=         (~metaBUS_RD_DATA_H[3]);
+    BUS_RD_CLK_CTRL_L              <=         (~metaBUS_RD_CLK_H[3]);
+
+// changes if we go to the new 2310 Interface Card with electronic switch 
+//  these allow the electronic switch to connect the signals directley
+//  while the output driver gate is left open because of the 1'b1 value
+    //BUS_10_20_DRIVE_L              <=      real_drive == 1'b1
+    //                                        ? 1'b1
+    //                                        : (metaBUS_10_20_CTRL_L[3]);
+    //BUS_ACC_GO_DRIVE_DRIVE_L       <=      real_drive == 1'b1
+    //                                        ? 1'b1
+    //                                        : (metaBUS_ACC_GO_DRIVE_CTRL_L[3]);
+    //BUS_ACCESS_RDY_CTRL_H <=       real_drive == 1'b1
+    //                                    ? (BUS_ACCESS_RDY_EMUL_H)
+    //                                    : (BUS_ACCESS_RDY_EMUL_H & Cart_Ready);
+    //
+    //BUS_HOME_CTRL_L <=             real_drive == 1'b1
+    //                                    ? 1'b1
+    //                                    : (BUS_HOME_DRIVE_EMUL_L | ~Cart_Ready);
+    //BUS_SECTOR_CTRL_L <=           real_drive == 1'b1
+    //                                    ? 1'b1
+    //                                    : ~(BUS_SECTOR_EMUL_H | ~Cart_Ready);
+    //
+    //BUS_INDEX_CTRL_L <=            real_drive == 1'b1
+    //                                    ? 1'b1
+    //                                    : ~(BUS_INDEX_EMUL_H | ~Cart_Ready);
+    //BUS_ACC_REV_DRIVE_L <=        real_drive == 1'b1
+    //                                    ? 1'b1
+    //                                    : (metaBUS_ACC_REV_CTRL_L[3]);
+
+
+    // signals captured and sent to seek logic
+    BUS_ACC_GO_L                   <=         (metaBUS_ACC_GO_DRIVE_CTRL_L[3]);
+    BUS_ACC_REV_L                  <=         (metaBUS_ACC_REV_CTRL_L[3]);
+    BUS_10_20_L                    <=         (metaBUS_10_20_CTRL_L[3]);
+
+    // signals captured and sent to sector logic
+    BUS_SECTOR_L                   <=         (metaBUS_SECTOR_DRIVE_L[3]);
+    BUS_INDEX_L                    <=         (metaBUS_INDEX_DRIVE_L[3]);
+
+    // signals captured and sent to read and write logic
+    BUS_RD_GATE_L                  <=         (metaBUS_RD_GATE_CTRL_L[3]);
+    BUS_HEAD_SELECT_L              <=         (metaBUS_HEAD_SELECT_CTRL_L[3]);
+    BUS_WT_GATE_L                  <=         (metaBUS_WT_GATE_CTRL_L[3] | ~Selected_Ready);
 
     // Signals that depend on real_drive status
-    BUS_ACCESS_RDY_CTRL_H <=       real_drive == 1'b1
-                                        ? (metaBUS_ACCESS_RDY_DRIVE_H[3] & Selected_Ready)
-                                        : (BUS_ACCESS_RDY_EMUL_H & Cart_Ready);
+// the next four are replaced by the section above if the 
+// electronic switch version of the 2310 Interface Board is used
+//      from here
+    BUS_ACCESS_RDY_CTRL_H <=       BUS_ACCESS_RDY_EMUL_H;
 
     BUS_HOME_CTRL_L <=             real_drive == 1'b1
-                                        ? (metaBUS_HOME_DRIVE_L[3] | ~Selected_Ready)
+                                        ? (metaBUS_HOME_DRIVE_L[3])
                                         : (BUS_HOME_DRIVE_EMUL_L | ~Cart_Ready);
 
     BUS_SECTOR_CTRL_L <=           real_drive == 1'b1
-                                        ? metaBUS_SECTOR_DRIVE_L[3] & Selected_Ready
+                                        ? metaBUS_SECTOR_DRIVE_L[3]
                                         : ~(BUS_SECTOR_EMUL_H | ~Cart_Ready);
 
     BUS_INDEX_CTRL_L <=            real_drive == 1'b1
-                                        ? metaBUS_INDEX_DRIVE_L[3] & Selected_Ready
+                                        ? metaBUS_INDEX_DRIVE_L[3]
                                         : ~(BUS_INDEX_EMUL_H | ~Cart_Ready);
-
+//      to here
     BUS_WRITE_SEL_ERR_CTRL_L <=    real_drive == 1'b1
-                                        ? (metaBUS_WRITE_SEL_ERR_DRIVE_L[3] | ~Selected_Ready)
+                                        ? (metaBUS_WRITE_SEL_ERR_DRIVE_L[3])
                                         : 1'b1;
 
-    BUS_90S_RELAY_CTRL_L <=        real_drive == 1'b1
-                                        ? (metaBUS_90S_RELAY_DRIVE_L[3]) & Selected_Ready
-                                        : (BUS_90SEC_RELAY_EMUL_L | ~Cart_Ready);
-
     BUS_WT_CLOCKB_L <=             real_drive == 1'b1
-                                        ? (metaBUS_WT_CLOCKB_DRIVE_L[3] | ~Selected_Ready)
+                                        ? (metaBUS_WT_CLOCKB_DRIVE_L[3])
                                         : (BUS_WT_CLOCKB_EMUL_L | ~Cart_Ready);
 
     BUS_WT_CLOCKB_CTRL_L <=        real_drive == 1'b1
-                                        ? (metaBUS_WT_CLOCKB_DRIVE_L[3] | ~Selected_Ready)
+                                        ? (metaBUS_WT_CLOCKB_DRIVE_L[3])
                                         : (BUS_WT_CLOCKB_EMUL_L | ~Cart_Ready);
+
+    // don't pass along if we are not ready to go
+    BUS_90S_RELAY_CTRL_L <=        real_drive == 1'b1
+                                        ? (metaBUS_90S_RELAY_DRIVE_L[3] & Selected_Ready)
+                                        : (BUS_90SEC_RELAY_EMUL_L | ~Cart_Ready);
 
     BUS_FILE_READY_CTRL_L <=       real_drive == 1'b1
                                         ? (metaBUS_FILE_READY_DRIVE_L[3] | ~Cart_Ready)        

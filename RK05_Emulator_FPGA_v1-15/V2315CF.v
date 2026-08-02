@@ -37,7 +37,7 @@ module V2315CF (
 // BUS Connector Inputs, 19 signals
 
 //  Drive side 12 signals
-    input wire BUS_ACCESS_RDY_DRIVE_H,    // Seek ready and on-cylinder
+//    input wire BUS_ACCESS_RDY_DRIVE_H,    // Seek ready and on-cylinder
     input wire BUS_HOME_DRIVE_L,          // indicates at track zero
     input wire BUS_WT_CLOCKB_DRIVE_L,     // 720 KHz clock to control writes
             // These next two signals are not read nor used in this design
@@ -155,6 +155,7 @@ wire Read_Only;
 wire Cart_Ready;
 wire Fault_Latch;
 wire real_drive;
+wire Reset_Cylinder;
 
 wire Selected_Ready;
 wire Selected;
@@ -527,7 +528,7 @@ bus_outputs i_bus_outputs (
     .Fault_Latch (Fault_Latch),
     .real_drive (real_drive),
     .BUS_FILE_READY_DRIVE_L (BUS_FILE_READY_DRIVE_L),
-    .BUS_ACCESS_RDY_DRIVE_H (BUS_ACCESS_RDY_DRIVE_H),
+//    .BUS_ACCESS_RDY_DRIVE_H (BUS_ACCESS_RDY_DRIVE_H),
     .BUS_HOME_DRIVE_L (BUS_HOME_DRIVE_L),
     .BUS_WT_CLOCKB_DRIVE_L (BUS_WT_CLOCKB_DRIVE_L),
     .BUS_SECTOR_DRIVE_L (BUS_SECTOR_DRIVE_L),
@@ -671,7 +672,8 @@ seek_to_cylinder i_seek_to_cylinder (
     .Cart_Ready (Cart_Ready),
     .real_drive (real_drive),
     .BUS_HOME_DRIVE_L (BUS_HOME_DRIVE_L),
-    .BUS_ACCESS_RDY_DRIVE_H (BUS_ACCESS_RDY_DRIVE_H),
+//    .BUS_ACCESS_RDY_DRIVE_H (BUS_ACCESS_RDY_DRIVE_H),
+    .Reset_Cylinder (Reset_Cylinder),
 
     // Outputs
     .Cylinder_Address (Cylinder_Address),
@@ -715,6 +717,7 @@ spi_interface i_spi_interface (
     .Cart_Ready (Cart_Ready),
     .Read_Only (Read_Only),
     .Fault_Latch (Fault_Latch),
+    .Reset_Cylinder (Reset_Cylinder),
     .interface_test_mode (interface_test_mode),
     .command_interrupt (CMD_INTERRUPT),
     .Servo_Pulse_FPGA (Servo_Pulse_FPGA)
