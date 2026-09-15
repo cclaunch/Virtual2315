@@ -138,9 +138,7 @@ try:
     print ("Displaying sector at","cylinder",cyl,"- hex",f"{cyl:#0{6}X}".replace("X","x"),"-","head",head,"sector",sector)
 
     for addr in range(321):
-        if (addr == 0):
-            print(f"{addr:#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x"))
-        elif (addr == 320):
+        if  (addr == 320):
             print(f"{addr:#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x"))        
         elif (addr % 4 == 0):
             print(f"{addr:#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x"))
