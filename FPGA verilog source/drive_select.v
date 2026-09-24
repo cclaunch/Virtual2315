@@ -30,7 +30,7 @@ module drive_select(
 `define ST2 2'd2 // 2 - running
 reg [1:0] startup_state; // read state machine state variable
 
-reg [27:0] timer;         // ninety second timer
+// CVC reg [27:0] timer;         // ninety second timer
 
 //============================ Start of Code =========================================
 
@@ -42,7 +42,7 @@ begin : SELECT // block name
     Selected <= 1'b0;
     BUS_UNLOCKED_EMUL_L <= 1'b1;
     BUS_90SEC_RELAY_EMUL_L <= 1'b0;
-    timer <= 28'd90000000;
+// CVC    timer <= 28'd90000000;
     startup_state <= `ST0;
   end
   else begin
@@ -66,7 +66,7 @@ begin : SELECT // block name
       BUS_90SEC_RELAY_EMUL_L <= 1'b1;
 
       // timer set at 90 seconds (counting in microseconds)
-      timer <= 28'd90000000;
+// CVC      timer <= 28'd90000000;
 
      end
 
@@ -74,15 +74,15 @@ begin : SELECT // block name
     `ST1: begin     
       // move to online when fully spinning
       startup_state <= (Cart_Ready == 1'b1) 
-                        ? (timer == 0) 
+// CVC                        ? (timer == 0) 
                                ? `ST2 
-                               : `ST1 
-                        : `ST0;
+                               : `ST1;
+// CVC                        : `ST0;
 
       // decrement timer
-      timer <=   clkenbl_1usec == 1'b1
-                 ? timer - 1
-                 : timer;
+// CVC      timer <=   clkenbl_1usec == 1'b1
+// CVC                 ? timer - 1
+// CVC                 : timer;
 
       // turn off unlocked lamp
       BUS_UNLOCKED_EMUL_L <= real_drive == 1'b1

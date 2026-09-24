@@ -20,8 +20,6 @@ module spi_interface(
     input wire [7:0] Cylinder_Address,   // input to be able to read the Cylinder Address
     input wire Head_Select,              // input to be able to read the Head Select bit
     input wire Selected_Ready,           // input to be able to read Selected_Ready
-    input wire [7:0] major_version,
-    input wire [7:0] minor_version,
     input wire [1:0] Sector_Address,     // Sector Address to be read test visibility mode
     input wire strobe_selected_ready,
     input wire read_selected_ready,
@@ -65,7 +63,7 @@ wire spi_start;
 
 //============================ Start of Code =========================================
 
-// SB_DFFS - D Flip-Flop, Set is asynchronous to the clock.
+// SB_DFFS - D Flip-Flop, Set is asynchronous to the clock
 SB_DFFS SPI_DFFS_inst (
 .Q(spi_start), // Registered Output, "Q" output of the DFF
 .C(~spi_clk),  // rising-edge Clock, so with ~spi_clk as the input, Q changes on the falling edge of spi_clk
@@ -77,32 +75,49 @@ SB_DFFS SPI_DFFS_inst (
 // produce inputs to registers we will write up to the Pico when it does a read of these reg address
 // these readback have diff # assigned to them, thus reading 00 is done with reg address A0
 // others just read out internal state, eg. 81 grabs current cylinder address
-assign muxed_read_data = (serialaddress == 8'h81) ? Cylinder_Address[7:0] :
-                           ((serialaddress == 8'h82) ? {2'b0, Sector_Address[1:0], operation_id[1:0], 
-                                                        Selected_Ready, Head_Select} :
-                            ((serialaddress == 8'h83) ? {strobe_selected_ready, read_selected_ready, write_selected_ready, 4'h00} :    // CVC temp debugging
-                             ((serialaddress == 8'h90) ? major_version[7:0] :
-                              ((serialaddress == 8'h91) ? minor_version[7:0] :
-                               // A0 reads back status similar to what is sent by 00
-                                   // x80 is Read_Only
-                                   // x40 is File Ready set by FPGA and lamp lit by Pico
-                                   // x20 is Fault_Latch set by FPGA and lamp lit by Pico
-                                   // x10 is Cart Ready set in FPGA by Pico and lamp lit by Pico
-                                   // x08 is Unlocked when 1, set in FPGA and lamp controlled by Pico
-                                   // x04 and x02 were 2 of the 3 bit drive select value from Pico, now 00
-                                   // x01 is real drive mode, 1 means hybrid using physical drive
-                               ((serialaddress == 8'ha0) ? {Read_Only, ~BUS_FILE_READY_CTRL_L, 
-                                                            Disk_Fault, Cart_Ready, ~BUS_UNLOCKED_EMUL_L, 2'd0, real_drive} : 
-                                // 88 reads a byte of one word from SDRAM, two calls gives us one word from SDRAM
-                                // dram_readdata[15:0] always has the data ready that was read at the dram_address.
-                                // The DRAM word read function is triggered after the odd byte is read.
-                                // The next word is requested after reading the high byte from register 0x88.
-                                ((serialaddress == 8'h88) 
-                                  ? (dramread_lowhigh 
-                                    ? dram_readdata[15:8] 
-                                    : dram_readdata[7:0])
-                                  : 8'b0
-                                ))))));
+assign muxed_read_data = (serialaddress == 8'h81) 
+                         ?  Cylinder_Address[7:0] 
+                         :  (serialaddress == 8'h82) 
+                            ?  {2'b0, Sector_Address[1:0], operation_id[1:0], Selected_Ready, Head_Select} 
+                            : (serialaddress == 8'ha0) 
+                              ?  {Read_Only, ~BUS_FILE_READY_CTRL_L,Disk_Fault, Cart_Ready, ~BUS_UNLOCKED_EMUL_L, ECC_error, 1'd0, real_drive}
+                              :  (serialaddress == 8'h88) 
+                                 ?  (dramread_lowhigh)
+                                    ?  dram_readdata[15:8] 
+                                    :  dram_readdata[7:0]
+                                 : 8'b0;
+
+// 81 returns the current cylinder address
+
+// 82 returns the sector address, head select, 
+//    what operation triggered the command_interrupt, and write_selected_ready
+
+// 88 reads a byte of one word from SDRAM, two calls gives us one word from SDRAM
+//   dram_readdata[15:0] always has the data ready that was read at the dram_address.
+//   The DRAM word read function is triggered after the odd byte is read.
+//   The next word is requested after reading the high byte from register 0x88.
+
+// A0 reads back status similar to what is set by 00
+//    x80 is Read_Only
+//    x40 is File Ready set by FPGA and lamp lit by Pico
+//    x20 is Fault_Latch set by FPGA and lamp lit by Pico
+//    x10 is Cart Ready set in FPGA by Pico and lamp lit by Pico
+//    x08 is Unlocked when 1, set in FPGA and lamp controlled by Pico
+//    x04 is ECC_error condition from the last write operation
+//    x02 is 1 of the 3 bit drive select value from Pico, now 0
+//    x01 is real drive mode, 1 means hybrid using physical drive
+
+// 00 sets Cart_Ready to bit x10 value
+
+// 04 sets Read Only state to bit x01 value
+
+// 05 sent three times with upper, middle and lower part of memory address
+
+// 06 sent twice to write high and low half of memory word
+
+// 10 sets flag to reset the Cylinder_Address to zero from bit x01
+
+// 88 sent twice to read high and low halves of memory word
 
 assign pre_spi_miso = ((spicount == 5'd7) & muxed_read_data[7]) | 
                       ((spicount == 5'd8) & muxed_read_data[6]) |
@@ -161,8 +176,8 @@ begin : HSCLOCKFUNCTIONS // block name
   else begin
 
     Disk_Fault = real_drive == 1'b1
-                    ? ~BUS_WRITE_SEL_ERR_L | ECC_error  // actual fault from drive or bad ECC bits on write
-                    : ECC_error;                              // bad ECC bits on write
+                 ?  ~BUS_WRITE_SEL_ERR_L | ECC_error  // actual fault from drive or bad ECC bits on write
+                 :  ECC_error;                        // bad ECC bits on write
     
     command_interrupt <= strobe_selected_ready || read_selected_ready || write_selected_ready;
 
@@ -178,6 +193,8 @@ begin : HSCLOCKFUNCTIONS // block name
 
     metaspi[3:0] <= {metaspi[2:0], ~spi_cs_n};
 
+    // fault latch set on when Disk_Fault is on
+    // and turned off when disk is not ready to 1130
     Fault_Latch <= BUS_FILE_READY_CTRL_L == 1'b1
                    ? 1'b0
                    : Disk_Fault == 1'b1
@@ -242,6 +259,9 @@ begin : HSCLOCKFUNCTIONS // block name
     // toggle respective lowhigh bits on a write or read, clear both bits on address load, otherwise lowhigh bits remain the same
     dram_read_enbl_spi <= (serialaddress == 8'h88) & ~metaspi[2] & metaspi[3] & dramread_lowhigh;
 
+  //
+  // below for dramwrite_lowhigh and dramread_lowhigh toggled so pairs of 06 or 88 messages cause a single read or write
+  //
     // dram_readdata[15:0] always has the data ready that was read at the dram_address.
     // The read function is triggered after the odd byte is read.
     // The next word is requested after reading the high byte when the SPI address is 8'h88.

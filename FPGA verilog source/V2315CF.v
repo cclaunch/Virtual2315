@@ -41,8 +41,6 @@ module V2315CF (
     input wire BUS_ACCESS_RDY_DRIVE_H,    // Seek ready and on-cylinder
     input wire BUS_HOME_DRIVE_L,          // indicates at track zero
     input wire BUS_WT_CLOCKB_DRIVE_L,     // 720 KHz clock to control writes
-    // input wire BUS_RD_DATA_DRIVE_L,       // Read data pulses, 160 ns pulse
-    // input wire BUS_RD_CLK_DRIVE_L,        // Read clock pulses, 160 ns pulse
     input wire BUS_FILE_READY_DRIVE_L,    // drive is ready, heads loaded, no error latches
     input wire BUS_SECTOR_DRIVE_L,        // 160 us negative pulse each time a sector slot passes the transducer
     input wire BUS_INDEX_DRIVE_L,         // 160 us negative pulse for each revolution of the disk, 600 μs after the sector pulse
@@ -114,18 +112,14 @@ module V2315CF (
     input wire clock,
     input wire pin_reset_n,
     
-// Debuggin Outputs
+// Debugging Outputs
+    output wire TESTER_OUTPUT_3_L,  // this is pin 45, brings out ECC Error flag
     output wire SELECTED_RDY_LED_N, // this is pin 75
     output wire Servo_Pulse_FPGA_pin,   // this is pin 73 and a copy of CMD_INTERRUPT
     output wire CMD_INTERRUPT      // this is pin 76
 );
 
 //============================ Internal Connections ==================================
-
-wire [7:0] MAJOR_VERSION;
-assign MAJOR_VERSION = 2;
-wire [7:0] MINOR_VERSION;
-assign MINOR_VERSION = 8;
 
 wire reset;
 
@@ -198,13 +192,10 @@ wire clock_pulse;
 wire data_pulse;
 wire clkenbl_1usec;
 
-
 wire strobe_selected_ready;
 wire completed_seek;
 wire read_selected_ready;
 wire write_selected_ready;
-
-
 
 //============================ MISC TOP LEVEL LOGIC TO DRIVE THE INDICATORS ==================================
 
@@ -223,6 +214,7 @@ assign BUS_UNLOCKED_LIGHT_H = ~BUS_UNLOCKED_EMUL_L;
 
 assign Servo_Pulse_FPGA_pin = CMD_INTERRUPT;
 
+assign TESTER_OUTPUT_3_L = ECC_error;
 
 //============================ SDRAM Bidirectional I/O pins ==================================
 
@@ -499,7 +491,6 @@ bus_disk_write i_bus_disk_write (
     .reset (reset),
     .BUS_WT_GATE_L (BUS_WT_GATE_L),
     .BUS_WT_DATA_CLK_L (BUS_WT_DATA_CLK_L),
-//    .BUS_WT_CLOCKB_L (BUS_WT_CLOCKB_L),
     .Selected_Ready (Selected_Ready),
     .BUS_SECTOR_L (BUS_SECTOR_L),
     .clkenbl_sector (clkenbl_sector),
@@ -511,7 +502,6 @@ bus_disk_write i_bus_disk_write (
     .dram_write_enbl_buswrite (dram_write_enbl_buswrite),
     .dram_writedata_buswrite (dram_writedata_buswrite),
     .load_address_buswrite (load_address_buswrite),
-    .dram_addr_incr_buswrite (dram_addr_incr_buswrite),
     .write_indicator (write_indicator),
     .write_selected_ready (write_selected_ready),
     .ECC_error (ECC_error),
@@ -587,7 +577,6 @@ drive_select i_drive_select (
     .dram_read_enbl_busread (dram_read_enbl_busread),
     .dram_write_enbl_spi (dram_write_enbl_spi),
     .dram_write_enbl_buswrite (dram_write_enbl_buswrite),
-    .dram_addr_incr_buswrite (dram_addr_incr_buswrite),
     .dram_writedata_spi (dram_writedata_spi),
     .dram_writedata_buswrite (dram_writedata_buswrite),
     .spi_serpar_reg (spi_serpar_reg),
@@ -676,13 +665,13 @@ spi_interface i_spi_interface (
     .BUS_UNLOCKED_EMUL_L (BUS_UNLOCKED_EMUL_L),
     .BUS_FILE_READY_CTRL_L (BUS_FILE_READY_CTRL_L),
     .BUS_WRITE_SEL_ERR_L (BUS_WRITE_SEL_ERR_L),
-    .major_version (MAJOR_VERSION),
-    .minor_version (MINOR_VERSION),
     .Sector_Address (Sector_Address),
     .strobe_selected_ready (completed_seek),
     .read_selected_ready (read_selected_ready),
     .write_selected_ready (write_selected_ready),
-    .ECC_error (ECC_error),
+// removed real error and turned off disk fault logic  CVC
+//    .ECC_error (ECC_error),
+    .ECC_error (1'b0),                                          //   CVC
     .real_drive (real_drive),
 
     // Outputs
@@ -895,3 +884,4 @@ serializer BUS_UNLOCKED_DRIVE_H_serializer (
 
 
 endmodule // V2315CF
+

@@ -10,7 +10,6 @@ module TB_sdram_controller(
     input wire load_address_buswrite,    // enable from bus write to sdram controller to load the address from sector, head select and cylinder
     input wire dram_read_enbl_spi,       // read enable request to DRAM controller from SPI
     input wire dram_read_enbl_busread,   // read enable request to DRAM controller from the BUS interface
-    input wire dram_addr_incr_buswrite,  // increment address without write
     input wire dram_write_enbl_spi,      // write enable request to DRAM controller from SPI
     input wire dram_write_enbl_buswrite, // write enable request to DRAM controller from the BUS interface
     input wire [15:0] dram_writedata_spi,       // 16-bit write data to DRAM controller from SPI
@@ -100,7 +99,7 @@ sdram_controller real_sdram_controller (
     .dram_read_enbl_spi (dram_read_enbl_spi),
     .dram_read_enbl_busread (dram_read_enbl_busread),
     .dram_write_enbl_spi (dram_write_enbl_spi),
-    .dram_addr_incr_buswrite (dram_addr_incr_buswrite),
+//    .dram_addr_incr_buswrite (dram_addr_incr_buswrite),
     .dram_write_enbl_buswrite (dram_write_enbl_buswrite),
     .dram_writedata_spi (dram_writedata_spi),
     .dram_writedata_buswrite (dram_writedata_buswrite),

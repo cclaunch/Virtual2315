@@ -14,7 +14,6 @@ module bus_disk_write(
     input wire reset,                  // active high synchronous reset input
     input wire BUS_WT_GATE_L,          // Write gate and Clock gate, when active enables write circuitry
     input wire BUS_WT_DATA_CLK_L,      // Composite write data and write clock
-//    input wire BUS_WT_CLOCKB_L,        // Bit cell data phase gate, when high is data bit time
     input wire Selected_Ready,         // disk contents have been copied from the microSD to the SDRAM & drive selected & ~fault latch
     input wire BUS_SECTOR_L,           // sector pulse
     input wire clkenbl_sector,         // sector enable pulse
@@ -25,7 +24,6 @@ module bus_disk_write(
     output reg dram_write_enbl_buswrite,       // read enable request to DRAM controller
     output reg [15:0] dram_writedata_buswrite, // 16-bit write data to DRAM controller
     output reg load_address_buswrite,          // enable to command the sdram controller to load the address from sector, head select and cylinder
-    output wire dram_addr_incr_buswrite,       // address increment enable in buswrite function
     output reg write_indicator,                // active high signal to drive the WT front panel indicator
     output reg ECC_error,                      // routed to the Fault indicator on the front panel
     output reg BUS_WT_CLOCKB_EMUL_L,            // produced 720KHz if not real drive
@@ -47,7 +45,6 @@ reg [1:0] bus_write_state; // read state machine state variable
 reg [4:0] bus_write_count; // count bits in a word
 reg [11:0] wordcount; // counter to keep track of the number of data & CRC words, in 16-bit increments
 reg [15:0] sp_reg; // parallel-to-serial register, receive data LSB first
-reg oldBUS_WT_DATA_CLK_L;  // prior version of BUS_WT_DATA_CLK_L
 reg catch_one;       // latch the data pulse if it happens
 reg oldBUS_SECTOR_L;  // prior version of BUS_SECTOR_L
 wire WT_CLOCKB_L;       // clock sent to CPU
@@ -58,7 +55,9 @@ reg [7:0]  sync_bit_count;    // count bits during sync word tail end
 reg sync_trigger;             // turn on when we see first 1 bit of the sync word
 reg [1:0]  ECC_count;         // count one bits for ECC generation
 reg [5:0]  clockb_timer;      // produce 714KHz clock dividing clock by 27
-wire debounced_gate;           // debounced BUS_ 
+reg [5:0]  count_one;         // assess value during data portion of bit cell
+wire debounced_gate;           // debounced 
+reg CVCECC;   // CVC
 
 // IBM 1130 use of 2310 turns on a 1.44 MHz clock in the drive which is also sent to the CPU controller logic
 // first turn on -Clock Gate to start the oscillator
@@ -93,6 +92,7 @@ begin : DISKWRITE // block name
     wordcount <= 12'd0;
     sp_reg <= 16'd0;
     catch_one <= 1'b0;
+    count_one <= 6'd0;
     write_tick_counter <= 0;
     write_gate_safe <= 0;
     sync_bit_count <= 8'd0;
@@ -100,11 +100,11 @@ begin : DISKWRITE // block name
     ECC_count <= 2'd0;
     ECC_error <= 1'b0;
     BUS_WT_CLOCKB_EMUL_L <= 1'b1;
-    oldBUS_WT_DATA_CLK_L  <= 1'b1;
     oldWT_CLOCKB_L <= 1'b1;
     oldBUS_SECTOR_L <= 1'b1;
     clockb_timer <= 6'd28;
     write_selected_ready <= 1'b0;
+    CVCECC <= 1'b0;  // CVC
   end
   else begin
 
@@ -120,13 +120,24 @@ begin : DISKWRITE // block name
 
     write_indicator <= (write_tick_counter != 0);
     
-    // sample the value of WT_DATA_CLK_L 400ns past when WT_CLOCKB_L goes low
-    catch_one <= (~WT_CLOCKB_L) && (oldWT_CLOCKB_L)
-                 ? ~BUS_WT_DATA_CLK_L 
-                 : catch_one;
+    // assess the count at all times so we know if we have more 1 than 0 in interval
+    catch_one <= count_one > 11                       // if at least 12 cycles have bit as 1
+                 ? 1'b1                               // then we count it
+                 : 1'b0;                              // otherwise it is a glitch
+
+    // count up 1 bit values during the clock phase assigned to data (when high
+    count_one <= (~WT_CLOCKB_L) && (oldWT_CLOCKB_L)   // falling edge of clock, now clock phase
+                 ?   0                                // reset count
+                 :   (~WT_CLOCKB_L)                    // is it in the clock phase?
+                     ?   count_one                    // freeze the count
+                     :   BUS_WT_DATA_CLK_L == 1'b0    // data phase, is the bit value 0?
+                         ? count_one + 1              // register another cycle of 0
+                         : count_one;                 // otherwise hold count
+
+                  
     
-    // Shift the captured data bit into bit 15 of the serial-to-parallel converter register at rising edge WT_CLOCKB_L
-    sp_reg[15:0] <= (WT_CLOCKB_L && ~oldWT_CLOCKB_L) && bus_write_state == `BWST2 && bus_write_count > 3
+    // Shift the captured data bit into bit 15 of the serial-to-parallel converter register at falling edge WT_CLOCKB_L
+    sp_reg[15:0] <= (~WT_CLOCKB_L && oldWT_CLOCKB_L) && bus_write_state == `BWST2 && bus_write_count > 3
                     ?  {catch_one, sp_reg[15:1]} 
                     :  dram_write_enbl_buswrite == 1'b1
                        ? 16'd0
@@ -143,21 +154,20 @@ begin : DISKWRITE // block name
                              ? (~BUS_WT_CLOCKB_EMUL_L && write_gate_safe)
                              : BUS_WT_CLOCKB_EMUL_L;
 
-    // save old BUS_WT_DATA_CLK_L to detect edge
-    oldBUS_WT_DATA_CLK_L  <= BUS_WT_DATA_CLK_L;
-
     // save old WT_CLOCK_L to detect edge
     oldWT_CLOCKB_L <= WT_CLOCKB_L;
 
     // save old BUS_SECTOR_L to detect edge
     oldBUS_SECTOR_L <= BUS_SECTOR_L;
 
+    CVCECC <= 1'b0;  // CVC
+
     case(bus_write_state)
 
 // 0 - write and erase heads are off, waiting for the write gate and end of sector pulse
     `BWST0: begin    
  
-      bus_write_state <= (Selected_Ready == 1'b1 && write_gate_safe == 1'b1 && BUS_SECTOR_L == 1'b1 && oldBUS_SECTOR_L == 1'b0) 
+      bus_write_state <= (Selected_Ready == 1'b1 && write_gate_safe == 1'b1) 
                          ? `BWST1 
                          : `BWST0;
 
@@ -183,20 +193,20 @@ begin : DISKWRITE // block name
 
       // on falling edge of WT_CLOCKB_L see if we had a 1 bit before
       // that is our first 1 bit - the sync word
-      sync_trigger <=  WT_CLOCKB_L && ~oldWT_CLOCKB_L && catch_one
+      sync_trigger <=  ~WT_CLOCKB_L && oldWT_CLOCKB_L && catch_one
                           ? 1'b1
                           : sync_trigger;
 
-      // when sync trigger is on, count next three bit cells at rising edge of WT_CLOCKB_L
+      // when sync trigger is on, count next three bit cells at falling edge of WT_CLOCKB_L
       sync_bit_count <=  ~WT_CLOCKB_L && oldWT_CLOCKB_L && sync_trigger
                           ? (sync_bit_count > 1
                             ? sync_bit_count - 1
                             : 8'd0)
                           : sync_bit_count;
 
-      // change state at falling edge of WT_CLOCKB_L
+      // change state at rising edge of WT_CLOCKB_L
       bus_write_state <= write_gate_safe 
-                         ? (~WT_CLOCKB_L && oldWT_CLOCKB_L)
+                         ? (WT_CLOCKB_L && ~oldWT_CLOCKB_L)
                            ?   ( sync_bit_count > 0
                                ?`BWST1
                                :`BWST2)
@@ -207,18 +217,24 @@ begin : DISKWRITE // block name
       dram_writedata_buswrite <= 16'd0;
 
       // set up write address at falling edge of WT_CLOCKB_L
-      load_address_buswrite <= ~WT_CLOCKB_L && oldWT_CLOCKB_L && sync_bit_count == 0;
+      load_address_buswrite <= ~WT_CLOCKB_L && oldWT_CLOCKB_L && sync_bit_count == 2;
 
-      // begin count at falling edge of WT_CLOCKB_L when sync bits finished
-      bus_write_count <= ~WT_CLOCKB_L && oldWT_CLOCKB_L && sync_bit_count == 0 
-                         ? 5'd19 
-                         : 5'd0; 
+      // begin count for next state when we are collecting words
+      bus_write_count <= 5'd19; 
 
       wordcount <= 12'd321; // set to the number of words to be transferred, which is bit length/16
 
-      ECC_error <= 1'b0;
+//      ECC_error <= 1'b0;
+// CVC diagnostic output
+      ECC_error <= (~WT_CLOCKB_L && oldWT_CLOCKB_L)           // CVC
+                    ?  catch_one                              // CVC
+                    :  (WT_CLOCKB_L && ~oldWT_CLOCKB_L)       // CVC
+                       ?  1'b0                                // CVC
+                       :  ECC_error;                          // CVC
 
       write_selected_ready <= 1'b1;
+
+      CVCECC <= 1'b0;  // CVC
 
      end
 
@@ -232,23 +248,23 @@ begin : DISKWRITE // block name
                            : `BWST2) 
                          : `BWST0;
 
-      // write a word at rising edge of BUS_W&T_CLOCKB_L when count of bits captured hits zero
-      dram_write_enbl_buswrite <= WT_CLOCKB_L & ~oldWT_CLOCKB_L && (bus_write_count == 0);
+      // write a word at rising edge of BUS_W&T_CLOCKB_L when count of bits captured hits two and we are still examining ECC
+      dram_write_enbl_buswrite <= WT_CLOCKB_L & ~oldWT_CLOCKB_L && (bus_write_count == 2);
 
       // change the output register for DRAM write 
-      dram_writedata_buswrite <= WT_CLOCKB_L && ~oldWT_CLOCKB_L && (bus_write_count == 0) ? sp_reg : dram_writedata_buswrite;
+      dram_writedata_buswrite <= WT_CLOCKB_L && ~oldWT_CLOCKB_L && (bus_write_count == 3) ? sp_reg : dram_writedata_buswrite;
 
       load_address_buswrite <= 1'b0;
 
-      // at falling edge of WT_CLOCKB_L we count off bits
-      bus_write_count <= ~WT_CLOCKB_L && oldWT_CLOCKB_L
+      // at rising edge of WT_CLOCKB_L we count off bits
+      bus_write_count <= WT_CLOCKB_L && ~oldWT_CLOCKB_L
                          ? (bus_write_count == 0 
                            ? 5'd19 
                            : bus_write_count - 1)
                          : bus_write_count;
 
-      // at falling edge of WT_CLOCKB_L count words when bits all captured
-      wordcount <= ~WT_CLOCKB_L & oldWT_CLOCKB_L && (bus_write_count == 0) 
+      // at rising edge of WT_CLOCKB_L count words when bits all captured
+      wordcount <= WT_CLOCKB_L & ~oldWT_CLOCKB_L && (bus_write_count == 0) 
                   ? wordcount - 1
                   : wordcount;
 
@@ -259,12 +275,27 @@ begin : DISKWRITE // block name
                      : ECC_count + catch_one 
                    : ECC_count;
 
-      // at rising edge of WT_CLOCKB_L if bits done, check for ECC error
-      ECC_error <= WT_CLOCKB_L && ~oldWT_CLOCKB_L && (bus_write_count == 0)
-                   ? ECC_count == 2'd0
-                      ? ECC_error
-                      : 1'b1
-                   : ECC_error;
+// CVC      // at rising edge of WT_CLOCKB_L if bits done, check for ECC error
+// CVC      ECC_error <= WT_CLOCKB_L && ~oldWT_CLOCKB_L && (bus_write_count == 0)
+// CVC                   ? ECC_count == 2'd0
+// CVC                      ? ECC_error
+// CVC                      : 1'b1
+// CVC                   : ECC_error;
+      // at rising edge of WT_CLOCKB_L if bits done, check for ECC error // CVC
+      CVCECC <=    WT_CLOCKB_L && ~oldWT_CLOCKB_L && (bus_write_count == 0) // CVC
+                   ? ECC_count == 2'd0 // CVC
+                      ? CVCECC // CVC
+                      : 1'b1 // CVC
+                   : CVCECC; // CVC
+
+// CVC diagnostic output
+      ECC_error <= (~WT_CLOCKB_L && oldWT_CLOCKB_L) && bus_write_state == `BWST2 && bus_write_count > 3     // CVC
+                    ?  catch_one                                                                            // CVC
+                    :  (WT_CLOCKB_L && ~oldWT_CLOCKB_L) && bus_write_state == `BWST2 && bus_write_count > 3 // CVC
+                       ?  1'b0                                                                              // CVC
+                       :  ECC_error;                                                                        // CVC
+
+      sync_trigger <= 1'b0;
 
       write_selected_ready <= 1'b1;
 
@@ -286,14 +317,9 @@ begin : DISKWRITE // block name
 
       load_address_buswrite <= 1'b0;
 
-      // at rising edge of WT_CLOCKB_L count bits
-//      bus_write_count <= ~oldBUS_WT_DATA_CLK_L && BUS_WT_DATA_CLK_L  // CVC
-//                         ? (bus_write_count == 0 
-//                           ? 5'd19 
-//                           : bus_write_count - 1)
-//                         : bus_write_count;
-
       wordcount <= 12'd0;
+
+      sync_trigger <= 1'b0;
 
       write_selected_ready <= 1'b1;
 
@@ -316,18 +342,5 @@ debouncer BUS_WT_GATE_debouncer (
     // Outputs
     .debounced_data (debounced_gate)
 );
-
-// ======== Serializer Module for BUS_WT_CLOCKB_EMUL_L ========
-//serializer BUS_WT_CLOCKB_EMUL_L_serializer (
-//    // Inputs
-//    .clock (clock),
-//    .reset (reset),
-//    .input_data (BUS_WT_CLOCKB_EMUL_L),
-//    .initial_state (1'b1),
-
-//    // Outputs
-//    .serialized (WT_CLOCKB_L)
-//);
-
 
 endmodule // End of Module bus_disk_write

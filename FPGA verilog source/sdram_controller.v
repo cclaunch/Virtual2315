@@ -23,20 +23,15 @@ module sdram_controller(
     input wire dram_read_enbl_busread,   // read enable request to DRAM controller from the BUS interface
     input wire dram_write_enbl_spi,      // write enable request to DRAM controller from SPI
     input wire dram_write_enbl_buswrite, // write enable request to DRAM controller from the BUS interface
-    input wire dram_addr_incr_buswrite,  // addr increment exists so the bus write state machine can advance the address pointer without writing to the DRAM
     input wire [15:0] dram_writedata_spi,      // 16-bit write data to DRAM controller from SPI
     input wire [15:0] dram_writedata_buswrite, // 16-bit write data to DRAM controller from bus
     input wire [7:0] spi_serpar_reg,           // 8-bit SPI serpar register used for writing to the sdram address register
     input wire [1:0] Sector_Address,           // specifies which sector is present "under the heads"
     input wire [7:0] Cylinder_Address,         // valid cylinder address
     input wire Head_Select,                    // head selection (upper or lower)
-
     input wire [15:0] SDRAM_DQ_in,     // input from DQ signal receivers
-
     output reg dram_writeack,           // dram read acknowledge
-
     output reg [15:0] dram_readdata,   // 16-bit read data from DRAM controller
-
     output reg [15:0] SDRAM_DQ_output, // outputs to DQ signal drivers
     output reg SDRAM_DQ_enable, // DQ output enable, active high
     output reg [12:0] SDRAM_Address,   // SDRAM Address
@@ -116,6 +111,7 @@ reg writerequest_spi;
 reg writerequest_buswrite;
 reg capture_readdata;
 wire [23:0] loading_address; 
+reg bump_addr;
 
 //============================ Start of Code =========================================
 
@@ -141,6 +137,7 @@ begin : HSCLOCKFUNCTIONS // block name
     writerequest_spi <= 1'd0;
     writerequest_buswrite <= 1'd0;
     capture_readdata <= 1'd0;
+    bump_addr <= 1'b0;
 
     SDRAM_CS_n <= 1'b1;
     SDRAM_RAS_n <= 1'b1;
@@ -160,23 +157,27 @@ begin : HSCLOCKFUNCTIONS // block name
 
     // memory_address affected by:
     //   load_address_spi;  load_address_busread;  load_address_buswrite;
-    //   dram_writeack;  <if none of these - then no change to memory_address;>
+    //   dram_read_enbl_spi; dram_read_enbl_busread; dram_write_enbl_spi; 
+    //   dram_write_enbl_buswrite; <if none of these - then no change to memory_address;>
     spi_mem_addr <= load_address_spi ? {spi_mem_addr[7:0], spi_serpar_reg[7:0]}: spi_mem_addr;
     memory_address <=  load_address_spi 
                     ? {spi_mem_addr[15:8], spi_mem_addr[7:0], spi_serpar_reg[7:0]} 
-                    : (load_address_busread | load_address_buswrite 
-                            ? loading_address
-                            : ((dram_read_enbl_spi | dram_read_enbl_busread | dram_addr_incr_buswrite | dram_writeack ) 
-                                  ?  memory_address + 1 
-                                  : memory_address));
+                    : (load_address_busread | load_address_buswrite)
+                            ?  loading_address
+                            :  bump_addr == 1'b1 
+                               ?   memory_address + 1
+                               :   memory_address;
+
+    // bump address when read or write is completing
+    bump_addr <= memstate == `CC5 | memstate == `CC10;
 
     capture_readdata <= (memstate == `CC5); // capture sdram read data the clock cycle after state CC5
     dram_readdata <= capture_readdata 
                    ? SDRAM_DQ_in 
                    : dram_readdata; // capture sdram read data in state CC5
 
-    // readrequest: SET on (dram_read_enbl_spi | dram_read_enbl_busread | dram_read_enbl_buswrite | load_address_spi), CLEAR on (memstate == 'CC5)
-    readrequest <= (dram_read_enbl_spi | dram_read_enbl_busread | load_address_spi | load_address_busread) | (readrequest & ~(memstate == `CC5));
+    // readrequest: SET on (dram_read_enbl_spi | dram_read_enbl_busread | load_address_busread), CLEAR on (memstate == 'CC5)
+    readrequest <= (dram_read_enbl_spi | dram_read_enbl_busread | load_address_busread) | (readrequest & ~(memstate == `CC5));
     
     // writerequest_spi: SET on (dram_write_enbl_spi), CLEAR on (memstate == 'CC10)
     writerequest_spi <=  (dram_write_enbl_spi ) | (writerequest_spi & ~(memstate == `CC10));  

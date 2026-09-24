@@ -111,10 +111,9 @@ begin : DISKREAD // block name
     case(bus_read_state)
 // transmission is off, waiting for the read gate
     `BRST0: begin     
-      // when to move out of idle state (read gate on, sector pulse over and we saw a read or clock bit)
+      // when to move out of idle state (read gate on, and we saw a read or clock bit)
       bus_read_state <= ( (Selected_Ready == 1'b1)
                         && (debounced_gate == 1'b1) 
-                        && BUS_SECTOR_L == 1'b1 
                         && ((clkenbl_read_bit == 1'b1) 
                             || (clkenbl_read_data == 1'b1)) ) 
                         ? `BRST1 
