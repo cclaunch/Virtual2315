@@ -21,6 +21,7 @@
 #define UNLOADINGERROROFF 4
 
 static int errorlightcount;
+static uint32_t ready_time;
 
 void process_run_load_state(Disk_State* dstate){
 int intermediate_result;
@@ -49,7 +50,7 @@ int intermediate_result;
 
             // ensure read only is off when we are in idle state
             if (get_read_only()) {
-                printf("Resetting Ready Only in idle state\r\n");    // $$$ CVC $$$
+                printf("Resetting Ready Only in idle state\r\n"); 
                 toggle_wp();
             }
 
@@ -174,11 +175,18 @@ int intermediate_result;
             else{
                 printf("Disk image data read successfully\r\n");
                 display_status((char *) "Image data", (char *) "read OK");
+                ready_time = to_ms_since_boot(get_absolute_time());
                 dstate->run_load_state = RLST8;
             }
             break;
 
         case RLST8:
+            if (get_real_mode() == false) {
+                if ( to_ms_since_boot(get_absolute_time()) - ready_time < 90000) {
+                //  twiddles thumbs here until 90 seconds elapses
+                break;
+                }
+            }
             // Close the disk image file and set the Cart_Ready bit in the FPGA mode register
             printf("  Drive_Address = %d, RLST%x, %d, %d\r\n", dstate->Drive_Address, dstate->run_load_state, dstate->rl_switch, dstate->wp_switch);
             intermediate_result = file_close_disk_image();
@@ -187,7 +195,7 @@ int intermediate_result;
                 display_error((char *) "cannot close", (char *) "image file");
                 dstate->run_load_state = RLST18;
             }
-            else{
+            else {
                 printf("Disk image data read, file closed successfully\r\n");
                 dstate->run_load_state = RLST9;
                 set_cart_ready();
@@ -249,6 +257,15 @@ int intermediate_result;
                 break;              // if good, continue in this state
             } else if (get_disk_ready() == 0) {                // drive turned off or failed
                 // the File Ready light tells operator if real/virtual drive is ready or not
+                display_error((char *) "drive not", (char *) "ready");
+                printf("File Ready went off\r\n");
+                clear_cpu_rdy_indicator();
+                dstate->run_load_state = RLST9; // If the drive stopped then retreat to RLST9
+                break;
+            } else if (is_card_present() == false) {
+                // the motor switch on the mini disk drive was turned off or cartridge removed
+                display_error((char *) "drive motor", (char *) "turned off");
+                printf("mini drive motor switch off or cartridge removed\r\n");
                 clear_cpu_rdy_indicator();
                 dstate->run_load_state = RLST9; // If the drive stopped then retreat to RLST9
                 break;

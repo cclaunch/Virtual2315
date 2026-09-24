@@ -2,7 +2,7 @@
 // V2315CF_PICO.cpp
 //   Top Level main() function of the Virtual 2315 Cartridge Facility
 //
-//  based on George Wiley's RK-05 Emulator, modified by Carl Claunch
+//  based on George Wiley's RK-05 Emulator, extensively modified by Carl Claunch
 // *********************************************************************************
 // 
 //===============================================================================================//
@@ -69,7 +69,7 @@ int extract_argc;
 volatile int char_from_callback;
 
 int debug_mode;
-int damage_mode;     // CVC inserted to handle one bad FPGA chip
+int damage_mode;     // CVC inserted to handle bad FPGA chip on one unit
 #define ALT_INTERRUPT 5      // use pin 5 instead of pin 4 (CMD_INTERRUPT)
 
 // console input callback code
@@ -133,7 +133,6 @@ void initialize_states(){
 
 // serial connection
 #define UART_ID uart0
-//#define BAUD_RATE 115200
 #define BAUD_RATE 460800
 #define UART_TX_PIN 0
 #define UART_RX_PIN 1
@@ -196,15 +195,14 @@ void initialize_system() {
 
     // look for defective board where pin 4 is always high, switch      CVC
     // over to use the alternative interrupt pin 5                      CVC
-    if (gpio_get(ALT_INTERRUPT) == 1) {                            //   CVC
-        printf(" *Found pin 4 hot, this is the damaged board\r\n");//   CVC
+//    if (gpio_get(ALT_INTERRUPT) == 1) {                            //   CVC
+//        printf(" *Found pin 4 hot, this is the damaged board\r\n");//   CVC
         damage_mode = true;                                        //   CVC
-    } else {                                                       //   CVC
-        damage_mode = false;                                       //   CVC 
-    }                                                              //   CVC
+//    } else {                                                       //   CVC
+//        damage_mode = false;                                       //   CVC 
+//    }                                                              //   CVC
 
-    printf(" *Emulator software version %d.%d\r\n", SOFTWARE_VERSION, SOFTWARE_MINOR_VERSION);
-    printf(" *FPGA version %d.%d\r\n", edisk.FPGA_version, edisk.FPGA_minorversion);
+    printf(" *V2315CF software version %d.%d\r\n", SOFTWARE_VERSION, SOFTWARE_MINOR_VERSION);
     printf(" *Board version %d\r\n", edisk.Board_version);
 
     // declare mode of V2315CF

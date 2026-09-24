@@ -223,19 +223,6 @@ uint8_t read_reg00()
     return(tempreg00);
 }
 
-
-int read_fpga_version()
-{
-    int readversion = read_write_spi_register(SPI_FPGACODE_VER_90, 0);
-     return(readversion);
-}
-
-int read_fpga_minorversion()
-{
-    int readminorversion = read_write_spi_register(SPI_FPGACODE_MINORVER_91, 0);
-    return(readminorversion);
-}
-
 int read_int_inputs(){
     int retval = read_write_spi_register(SPI_CYLADDR_81, 0);
     retval |= (read_write_spi_register(SPI_DRVSTATUS_82, 0) & 0xff) << 8;
@@ -537,8 +524,4 @@ void initialize_fpga(struct Disk_State* ddisk)
     ddisk->dc_low = false;
 
     //check_dc_low(ddisk);
-
-    // read the FPGA version and later confirm whether it's compatible with the software version
-    ddisk->FPGA_version = read_fpga_version();
-    ddisk->FPGA_minorversion = read_fpga_minorversion();
 }
