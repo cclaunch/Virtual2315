@@ -99,54 +99,60 @@ try:
 
     print ("Header verified")
 
-    cyl = -999
-    while (cyl == -999):
-        cyl = simpledialog.askinteger("Input", "Cylinder number:",parent=root)
+    rewind_point = sf.tell()
 
-    head = -999
-    while (head == -999):
-        head = simpledialog.askinteger("Input", "Head number:",parent=root)
+    while True:
 
-    sector = -999
-    while (sector == -999):
-        sector = simpledialog.askinteger("Input", "Sector number:",parent=root)
+        cyl = -999
+        while (cyl == -999):
+            cyl = simpledialog.askinteger("Input", "Cylinder number:",parent=root)
 
-    root.destroy()
+        head = -999
+        while (head == -999):
+            head = simpledialog.askinteger("Input", "Head number:",parent=root)
 
-    if (sector < 0 or sector > 3):
-        print('Invalid sector number (0 to 3)')
-        sf.close()
-        input("enter to exit")
-        sys.exit(1)
+        sector = -999
+        while (sector == -999):
+            sector = simpledialog.askinteger("Input", "Sector number:",parent=root)
 
-    if (head < 0 or head > 1):
-        print('Invalid head number (0 or 1)')
-        sf.close()
-        input("enter to exit")
-        sys.exit(1)
+        if (sector < 0 or sector > 3):
+            print('Invalid sector number (0 to 3)')
+            sf.close()
+            input("enter to exit")
+            sys.exit(1)
 
-    if (cyl < 0 or cyl > 202):
-        print('Invalid cylinder number (0 to 202)')
-        sf.close()
-        input("enter to exit")
-        sys.exit(1)
+        if (head < 0 or head > 1):
+            print('Invalid head number (0 or 1)')
+            sf.close()
+            input("enter to exit")
+            sys.exit(1)
 
-    skip = (cyl*8) + (head*4) + sector
+        if (cyl < 0 or cyl > 202):
+            print('Invalid cylinder number (0 to 202)')
+            sf.close()
+            input("enter to exit")
+            sys.exit(1)
 
-    sf.seek((skip*642),1)
+        skip = (cyl*8) + (head*4) + sector
 
-    print ("Displaying sector at","cylinder",cyl,"- hex",f"{cyl:#0{6}X}".replace("X","x"),"-","head",head,"sector",sector)
+        sf.seek((skip*642),1)
 
-    for addr in range(321):
-        if  (addr == 320):
-            print(f"{addr:#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x"))        
-        elif (addr % 4 == 0):
-            print(f"{addr:#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x"))
-            
-    sf.close()
-    input("enter to exit")
-    sys.exit(0)
+        print ("Displaying sector at","cylinder",cyl,"- hex",f"{cyl:#0{6}X}".replace("X","x"),"-","head",head,"sector",sector)
 
+        for addr in range(321):
+            if  (addr == 320):
+                print(f"{addr:#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x"))        
+            elif (addr % 4 == 0):
+                print(f"{addr:#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x"))
+                
+        choice = input("enter y to display another sector, any other character to exit")
+        if (choice != "y"):
+            root.destroy()
+            sf.close()
+            sys.exit(0)
+
+        sf.seek(rewind_point)
+        
 except SystemExit:
     print('Quitting')
     pass
