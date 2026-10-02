@@ -112,6 +112,7 @@ reg writerequest_buswrite;
 reg capture_readdata;
 wire [23:0] loading_address; 
 reg bump_addr;
+reg block_bump;
 
 //============================ Start of Code =========================================
 
@@ -138,6 +139,7 @@ begin : HSCLOCKFUNCTIONS // block name
     writerequest_buswrite <= 1'd0;
     capture_readdata <= 1'd0;
     bump_addr <= 1'b0;
+    block_bump <= 1'b0;
 
     SDRAM_CS_n <= 1'b1;
     SDRAM_RAS_n <= 1'b1;
@@ -168,16 +170,26 @@ begin : HSCLOCKFUNCTIONS // block name
                                ?   memory_address + 1
                                :   memory_address;
 
-    // bump address when read or write is completing
-    bump_addr <= memstate == `CC5 | memstate == `CC10;
+    // block incrementing address SET on loading SPI address and CLEAR on first access
+    block_bump <=      (load_address_spi)
+                       ?  1'b1
+                       :  (dram_write_enbl_spi || dram_read_enbl_spi)
+                          ?  1'b0
+                          :  block_bump;
+
+    // bump address when read or write is completing unless blocked
+    bump_addr <= block_bump
+                 ?  1'b0
+                 :  memstate == `CC5 | memstate == `CC10;
 
     capture_readdata <= (memstate == `CC5); // capture sdram read data the clock cycle after state CC5
+
     dram_readdata <= capture_readdata 
                    ? SDRAM_DQ_in 
                    : dram_readdata; // capture sdram read data in state CC5
 
-    // readrequest: SET on (dram_read_enbl_spi | dram_read_enbl_busread | load_address_busread), CLEAR on (memstate == 'CC5)
-    readrequest <= (dram_read_enbl_spi | dram_read_enbl_busread | load_address_busread) | (readrequest & ~(memstate == `CC5));
+    // readrequest: SET on (dram_read_enbl_spi | dram_read_enbl_busread | load_address_spi load_address_busread), CLEAR on (memstate == 'CC5)
+    readrequest <= (dram_read_enbl_spi | dram_read_enbl_busread | load_address_busread | load_address_spi) | (readrequest & ~(memstate == `CC5));
     
     // writerequest_spi: SET on (dram_write_enbl_spi), CLEAR on (memstate == 'CC10)
     writerequest_spi <=  (dram_write_enbl_spi ) | (writerequest_spi & ~(memstate == `CC10));  

@@ -50,6 +50,7 @@ module TB_bus_disk_write(
      reg [1:0] Sector_Address; //counter that specifies which sector is present "under the heads"
      reg Head_Select;
      wire [15:0] dram_readdata; // 16-bit read data from DRAM controller
+     wire CVC; // CVC
 
 wire [15:0] SDRAM_DQ_in;
 wire [15:0] SDRAM_DQ_output;
@@ -89,9 +90,8 @@ wire load_address_spi;
 .clock (clock),
 .reset (reset),
 .BUS_WT_GATE_L (BUS_WT_GATE_L),
-.BUS_WT_DATA_CLK_L (data_glitched),
+.BUS_WT_DATA_CLK_L (BUS_WT_DATA_CLK_L),
 .Selected_Ready (Selected_Ready),
-.BUS_SECTOR_L (BUS_SECTOR_CTRL_L),
 .real_drive (real_drive),
 .Cart_Ready (Cart_Ready),
 .clkenbl_sector (clkenbl_sector),
@@ -101,6 +101,7 @@ wire load_address_spi;
 .write_indicator (write_indicator),
 .ECC_error (ECC_error),
 .BUS_WT_CLOCKB_EMUL_L (BUS_WT_CLOCKB_EMUL_L),
+.CVC (CVC), // CVC
 .write_selected_ready (write_selected_ready)
 );
 
@@ -431,13 +432,13 @@ assign data_dumbass = ~BUS_WT_DATA_CLK_L;
     initial begin
       @(negedge reset);
       BUS_WT_GATE_L <= 1'b1;
-      #10000005
+      #10165000
       BUS_WT_GATE_L <= 1'b0;
       #5000000
       BUS_WT_GATE_L <= 1'b1;
-      #75
+      #201
       BUS_WT_GATE_L <= 1'b0;
-      #4721500
+      #4828000
       BUS_WT_GATE_L <= 1'b1;
     end
 
@@ -447,7 +448,7 @@ assign data_dumbass = ~BUS_WT_DATA_CLK_L;
         @(negedge reset);
         BUS_WT_DATA_CLK_L <= 1'b1;
         #10164900
-        repeat(185)
+        repeat(455)
         begin
             `BIT(`ZERO)
         end
@@ -480,9 +481,9 @@ assign data_dumbass = ~BUS_WT_DATA_CLK_L;
          begin
              `WORD(0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0)
          end
-// word 320 
+// word 320     0141
         `WORD(0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0) 
-// word 321
+// word 321     FFFF
         `WORD(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0)
 // extra word
      `WORD(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -540,7 +541,7 @@ assign data_dumbass = ~BUS_WT_DATA_CLK_L;
 #1000
         send_spi_byte(16'ha000);
 #1000
-        send_spi_byte(16'h0050);
+        send_spi_byte(16'h0350);
 #1000
         send_spi_byte(16'ha000);
         #5000
@@ -559,7 +560,7 @@ assign data_dumbass = ~BUS_WT_DATA_CLK_L;
         #6000
         send_spi_byte(16'h0669);
         #1000
-        send_spi_byte(16'h0669);
+        send_spi_byte(16'h06FF);
                 
         #21000000
         send_spi_byte(16'h050a);
@@ -573,6 +574,10 @@ assign data_dumbass = ~BUS_WT_DATA_CLK_L;
          #4000        
         send_spi_byte(16'h8800);
        
+        #4000        
+        send_spi_byte(16'h8800);
+         #4000        
+        send_spi_byte(16'h8800);
 //        send_spi_byte(16'h8200);
 
         // TEST 2: write Register 00

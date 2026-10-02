@@ -179,7 +179,6 @@ wire [7:0] spi_serpar_reg;
 wire [15:0] dram_readdata;
 wire [15:0] dram_writedata_spi;
 wire [15:0] dram_writedata_buswrite;
-wire dram_addr_incr_buswrite;
 wire dram_writeack;
 
 wire [15:0] SDRAM_DQ_in;
@@ -196,6 +195,8 @@ wire strobe_selected_ready;
 wire completed_seek;
 wire read_selected_ready;
 wire write_selected_ready;
+wire cmd_interrupt;
+wire CVC;
 
 //============================ MISC TOP LEVEL LOGIC TO DRIVE THE INDICATORS ==================================
 
@@ -212,9 +213,12 @@ assign Head_Select = ~BUS_HEAD_SELECT_L;
 
 assign BUS_UNLOCKED_LIGHT_H = ~BUS_UNLOCKED_EMUL_L;
 
-assign Servo_Pulse_FPGA_pin = CMD_INTERRUPT;
+assign Servo_Pulse_FPGA_pin = cmd_interrupt;
 
-assign TESTER_OUTPUT_3_L = ECC_error;
+assign CMD_INTERRUPT = cmd_interrupt;
+
+// assign TESTER_OUTPUT_3_L = ECC_error;
+assign TESTER_OUTPUT_3_L = CVC;
 
 //============================ SDRAM Bidirectional I/O pins ==================================
 
@@ -492,7 +496,6 @@ bus_disk_write i_bus_disk_write (
     .BUS_WT_GATE_L (BUS_WT_GATE_L),
     .BUS_WT_DATA_CLK_L (BUS_WT_DATA_CLK_L),
     .Selected_Ready (Selected_Ready),
-    .BUS_SECTOR_L (BUS_SECTOR_L),
     .clkenbl_sector (clkenbl_sector),
     .real_drive (real_drive),
     .dram_writeack (dram_writeack),
@@ -505,6 +508,7 @@ bus_disk_write i_bus_disk_write (
     .write_indicator (write_indicator),
     .write_selected_ready (write_selected_ready),
     .ECC_error (ECC_error),
+    .CVC (CVC), // CVC 
     .BUS_WT_CLOCKB_EMUL_L (BUS_WT_CLOCKB_EMUL_L)
 );
 
@@ -669,9 +673,7 @@ spi_interface i_spi_interface (
     .strobe_selected_ready (completed_seek),
     .read_selected_ready (read_selected_ready),
     .write_selected_ready (write_selected_ready),
-// removed real error and turned off disk fault logic  CVC
-//    .ECC_error (ECC_error),
-    .ECC_error (1'b0),                                          //   CVC
+    .ECC_error (ECC_error),
     .real_drive (real_drive),
 
     // Outputs
@@ -685,7 +687,7 @@ spi_interface i_spi_interface (
     .Read_Only (Read_Only),
     .Fault_Latch (Fault_Latch),
     .Reset_Cylinder (Reset_Cylinder),
-    .command_interrupt (CMD_INTERRUPT)
+    .command_interrupt (cmd_interrupt)
 );
 
 // ======== Module ======== timing_gen =====

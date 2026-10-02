@@ -99,7 +99,6 @@ reg Head_Select;
     .load_address_spi (load_address_spi),
     .load_address_busread (load_address_busread),
     .load_address_buswrite (load_address_buswrite),
-    .dram_addr_incr_buswrite (dram_addr_incr_buswrite),
     .dram_read_enbl_spi (dram_read_enbl_spi),
     .dram_read_enbl_busread (dram_read_enbl_busread),
     .dram_write_enbl_spi (dram_write_enbl_spi),
@@ -205,7 +204,7 @@ assign ask_dram = load_address_busread | dram_read_enbl_busread;
       BUS_RD_GATE_L <= 1'b1;
       #107
       BUS_RD_GATE_L <= 1'b0;
-      #8508004
+      #9508004
       BUS_RD_GATE_L <= 1'b1;
     end
 

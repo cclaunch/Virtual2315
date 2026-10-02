@@ -54,10 +54,11 @@ reg [4:0] spicount; // define as 5 bits instead of 4 to prevent the first bit fr
 reg [7:0] serialaddress;
 wire [7:0] muxed_read_data;
 wire pre_spi_miso;
-reg frdlyd;
 reg toggle_wp;
 reg [1:0] operation_id;
 reg Disk_Fault;
+reg [15:0] saveread;
+reg [3:0] armcount;
 
 wire spi_start;
 
@@ -73,7 +74,7 @@ SB_DFFS SPI_DFFS_inst (
 
 
 // produce inputs to registers we will write up to the Pico when it does a read of these reg address
-// these readback have diff # assigned to them, thus reading 00 is done with reg address A0
+// these readback have diff # assigned to them, thus reading 03 is done with reg address A0
 // others just read out internal state, eg. 81 grabs current cylinder address
 assign muxed_read_data = (serialaddress == 8'h81) 
                          ?  Cylinder_Address[7:0] 
@@ -83,8 +84,8 @@ assign muxed_read_data = (serialaddress == 8'h81)
                               ?  {Read_Only, ~BUS_FILE_READY_CTRL_L,Disk_Fault, Cart_Ready, ~BUS_UNLOCKED_EMUL_L, ECC_error, 1'd0, real_drive}
                               :  (serialaddress == 8'h88) 
                                  ?  (dramread_lowhigh)
-                                    ?  dram_readdata[15:8] 
-                                    :  dram_readdata[7:0]
+                                    ?  saveread[15:8] 
+                                    :  saveread[7:0]
                                  : 8'b0;
 
 // 81 returns the current cylinder address
@@ -107,7 +108,7 @@ assign muxed_read_data = (serialaddress == 8'h81)
 //    x02 is 1 of the 3 bit drive select value from Pico, now 0
 //    x01 is real drive mode, 1 means hybrid using physical drive
 
-// 00 sets Cart_Ready to bit x10 value
+// 03 sets Cart_Ready to bit x10 value
 
 // 04 sets Read Only state to bit x01 value
 
@@ -159,7 +160,6 @@ begin : HSCLOCKFUNCTIONS // block name
     dram_read_enbl_spi <= 1'b0;
     dram_write_enbl_spi <= 1'b0;
     Cart_Ready <= 1'b0;
-    frdlyd <= 1'b0;
     Read_Only <= 1'b0;
     Fault_Latch <= 1'b0;
     Reset_Cylinder <= 1'b0;
@@ -171,11 +171,13 @@ begin : HSCLOCKFUNCTIONS // block name
     toggle_wp <= 1'b0;
     operation_id <= 2'b00;
     command_interrupt <= 1'b0;
-    Disk_Fault = 1'b0;
+    Disk_Fault <= 1'b0;
+    saveread <= 16'd0;
+    armcount <= 4'd0;
   end
   else begin
 
-    Disk_Fault = real_drive == 1'b1
+    Disk_Fault <= real_drive == 1'b1
                  ?  ~BUS_WRITE_SEL_ERR_L | ECC_error  // actual fault from drive or bad ECC bits on write
                  :  ECC_error;                        // bad ECC bits on write
     
@@ -189,7 +191,6 @@ begin : HSCLOCKFUNCTIONS // block name
                                  ? 2'h2 
                                  : operation_id));
 
-    frdlyd <= Cart_Ready;
 
     metaspi[3:0] <= {metaspi[2:0], ~spi_cs_n};
 
@@ -202,10 +203,10 @@ begin : HSCLOCKFUNCTIONS // block name
                      : Fault_Latch;
 
   //
-  // below for register address 0x00 when written by the Pico
+  // below for register address 0x03 when written by the Pico
   //
     // x10 is Cart Ready set/clear by Pico
-    Cart_Ready <=        ((serialaddress == 8'h00) && ~metaspi[2] && metaspi[3]) 
+    Cart_Ready <=        ((serialaddress == 8'h03) && ~metaspi[2] && metaspi[3]) 
                  ? spi_serpar_reg[4]   
                  : Cart_Ready; 
 
@@ -255,9 +256,21 @@ begin : HSCLOCKFUNCTIONS // block name
     // register address 0x88 written by Pico triggers read on second (low) 88 message
     // dram_readdata[15:0] always has the data ready that was read at the dram_address.
     // The read function is triggered after the odd byte is read.
-    // The next word is requested after reading the high byte when the SPI address is 8'h88.
+    // The next word is requested after reading bits 7 to 0 when the SPI address is 8'h88.
+    // Save the data from the read associated with load_address_spi 8 cycles later
     // toggle respective lowhigh bits on a write or read, clear both bits on address load, otherwise lowhigh bits remain the same
-    dram_read_enbl_spi <= (serialaddress == 8'h88) & ~metaspi[2] & metaspi[3] & dramread_lowhigh;
+    dram_read_enbl_spi <= (serialaddress == 8'h88) & ~metaspi[2] & metaspi[3] & ~dramread_lowhigh;
+    armcount           <= (serialaddress == 8'h05) & ~metaspi[2] & metaspi[3]
+                          ?  4'd10
+                          :  armcount == 4'd0
+                             ?  armcount
+                             :  armcount - 1;
+
+    saveread           <= (serialaddress == 8'h88) & ~metaspi[2] & metaspi[3] & dramread_lowhigh 
+                          ?  dram_readdata
+                          :  armcount == 4'd1 
+                             ?  dram_readdata
+                             :  saveread;
 
   //
   // below for dramwrite_lowhigh and dramread_lowhigh toggled so pairs of 06 or 88 messages cause a single read or write

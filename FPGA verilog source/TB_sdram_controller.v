@@ -57,13 +57,13 @@ reg [31:0] infile;
 //============================ Start of Code =========================================
 
 assign loadaddrrequest = load_address_spi | load_address_busread | load_address_buswrite;
-assign readrequest = dram_read_enbl_spi | dram_read_enbl_busread | load_address_busread;
+assign readrequest = dram_read_enbl_spi | dram_read_enbl_busread | load_address_busread | load_address_spi;
 assign writerequest = dram_write_enbl_spi | dram_write_enbl_buswrite;
 assign dramoutput = dram_write_enbl_spi ? dram_writedata_spi : dram_writedata_buswrite;
 
 
 initial begin
-  forever begin
+  begin
     outfile = $fopen("log.txt", "w");
     $fdisplay(outfile, "START OF WRITE\n");
     $fflush(outfile);
@@ -83,7 +83,8 @@ end
 initial begin
   dram_readdata <= 16'b0;
   forever begin
-    @(posedge readrequest)
+    @(posedge readrequest) 
+    #125
     $fscanf(infile, "%h", dram_readdata);
   end
 end

@@ -37,8 +37,7 @@ module bus_disk_read(
 `define BRST0 3'd0 // 0 - off
 `define BRST1 3'd1 // 1 - send Preamble
 `define BRST2 3'd2 // 2 - send Sync
-`define BRST4 3'd4 // 4 - send Data & CRC     no CRC with 2310
-`define BRST5 3'd5 // 5 - send Postamble      
+`define BRST4 3'd4 // 4 - send Data  but no CRC with 2310, instead 4 ECC bits per word
 reg [2:0] bus_read_state; // read state machine state variable
 
 // IBM 1130 2310 20 bit words, 321 words with no CRC, 4 logical sectors (8 physical)
@@ -55,8 +54,6 @@ reg [2:0] bus_read_state; // read state machine state variable
 // we have to emit the 16 bit cells for the data then emit the four check bits
 // they are emitted as 1 and the counter bumped till it hits 00 then we send 0 bits
 //
-// the postamble should be all zero bit values until the next sector arrives
-// 
 // our output of BUS_RD_CLK_H and BUS_RD_DATA_H values always stops when -Read Gate goes high
 
 reg [7:0]  bus_read_count; // count bits in a word or Preamble length
@@ -97,13 +94,16 @@ begin : DISKREAD // block name
     oldBUS_SECTOR_L <= BUS_SECTOR_L;
 
     // run counter to manage lamp flicker for read indicator
-    read_tick_counter <= (bus_read_state == `BRST1) 
-                         ? 16 
-                         : (clkenbl_sector 
-                                ? ((read_tick_counter == 0) 
-                                        ? 0 
-                                        : read_tick_counter - 1) 
-                                : read_tick_counter);
+    // reset at idle state, set in preamble state and keep on for 16 sector markers
+    read_tick_counter <= (bus_read_state == `BRST0)
+                         ?   0
+                         :  (bus_read_state == `BRST1) 
+                            ?  16 
+                            :  (clkenbl_sector 
+                               ?  ((read_tick_counter == 0) 
+                                  ? 0 
+                                  : read_tick_counter - 1) 
+                               :  read_tick_counter);
 
     // turn on read indicator 15 of 16 sector pulses (150 ms)
     read_indicator <= (read_tick_counter != 0);
@@ -125,7 +125,7 @@ begin : DISKREAD // block name
                         : 8'd0; 
 
       // emit nothing while idle
-      BUS_RD_CLK_H <= 1'b0; // send all-zeros, no clocks, when off
+      BUS_RD_CLK_H <= 1'b0;   // send all-zeros, no clocks, when off
       BUS_RD_DATA_H <= 1'b0;  // send all-zeros, no data pulses, when off
 
       // reset shift register and word count
@@ -256,10 +256,8 @@ begin : DISKREAD // block name
       // if done with sector, graceful stop
       bus_read_state <= 
           debounced_gate == 1'b1 
-          ?    (((bus_read_count == 8'd1) && (wordcount == 12'd1) && clkenbl_read_data) 
-               ? `BRST5 
-               : `BRST4) 
-          : `BRST0;
+          ?  `BRST4
+          :  `BRST0;
 
       // grab next word from DRAM and put in shift register
       psreg <= clkenbl_read_data 
@@ -268,7 +266,8 @@ begin : DISKREAD // block name
                       : psreg >> 1) 
                : psreg;
 
-      // decrement word count 
+      // decrement word count but this is only used as a convenience
+      // for monitoring behavior during simulation.
       wordcount <= ((bus_read_count == 8'd1) && clkenbl_read_data) 
                    ? wordcount - 1 
                    : wordcount;
@@ -277,40 +276,12 @@ begin : DISKREAD // block name
       load_address_busread <= 1'b0;
 
       // request the next word from the sdram
-      dram_read_enbl_busread <= (bus_read_count == 8'd19) & (wordcount != 12'd1) & clkenbl_read_data; 
+      dram_read_enbl_busread <= (bus_read_count == 8'd19) & clkenbl_read_data; 
 
       read_selected_ready <= 1'b1;
 
      end
 
-// send Postamble of all zeroes
-    `BRST5: begin     
-      // always clock pulse
-      BUS_RD_CLK_H <= clock_pulse;
-
-      // send all-zeros in the Postamble
-      BUS_RD_DATA_H <= 1'b0; 
-
-      // just one bit 
-      bus_read_count <= 8'd0;
-
-      // continue output clock and data pulses until the
-      // read gate goes off or we reach the next sector
-      bus_read_state <= (debounced_gate == 1'b0) || (clkenbl_sector == 1'b1)
-                        ? `BRST0 
-                        : `BRST5;
- 
-      // zero out register and count
-      psreg <= 16'd0;
-      wordcount <= 12'd0;
-
-      // dont try to read
-      load_address_busread <= 1'b0;
-      dram_read_enbl_busread <= 1'b0; 
-
-      read_selected_ready <= 1'b1;
-
-     end
 
     default: begin
       read_selected_ready <= 1'b0;
