@@ -41,7 +41,8 @@ def validateword(astring):
         return ""
     if not (astring[3:] in legit):
         return ""
-    return astring
+    cstring.encode('utf-8').hex()
+    return cstring
 
 class HexCellDelegate(QStyledItemDelegate):
     def __init__(self, validator, parent=None):
@@ -56,9 +57,9 @@ class HexCellDelegate(QStyledItemDelegate):
 
 
 class HexTableEditor(QWidget):
-    def __init__(self, old_sector_data):
+    def __init__(self, old_sector_data, cyl, head, sector):
         super().__init__()
-        self.setWindowTitle("Sector Editor - close to finish update")
+        self.setWindowTitle(f"Sector Editor - Cylinder {cyl:X} ({cyl})  Head {head}  Sector {sector} - close to update disk file")
         self.resize(750, 500) # Wider to accommodate headers comfortably
         
         layout = QVBoxLayout(self)
@@ -119,6 +120,28 @@ class HexTableEditor(QWidget):
     def grab_updated_sector(self):
         # send the updated values out
         return (self.data)
+
+def validatecyl(astring):
+    legit = ["0", "1", "2", "3", "4", "5", "6", "7", \
+             "8", "9", "a", "b", "c", "d", "e", "f", \
+             "A", "B", "C", "D", "E", "F"]
+    decimal = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,10,11,12,13,14,15]
+    if len(astring) == 0 or len(astring) >2:
+        return ""
+    cstring = []
+    for x in range(2-len(astring)):
+        cstring.append("0")
+    cstring.append(astring)
+    rstring = "".join(cstring)
+    if not (rstring[0:1] in legit):
+        return -999
+    if not (rstring[1:] in legit):
+        return -999
+    pos = legit.index(rstring[0:1])
+    cyl = pos*16
+    pos = legit.index(rstring[1:])
+    cyl += pos
+    return cyl
 
 try:
 
@@ -192,7 +215,8 @@ try:
 
         cyl = -999
         while (cyl == -999):
-            cyl = simpledialog.askinteger("Input", "Cylinder number:",parent=root)
+            stringcyl = simpledialog.askstring("Input", "Cylinder number in hex:",parent=root)
+            cyl = validatecyl(stringcyl)
 
         head = -999
         while (head == -999):
@@ -232,7 +256,7 @@ try:
         print ("Updating sector at","decimal cylinder",cyl,"- hex cylinder",f"{cyl:#0{5}X}".replace("X","x"),"-","head",head,"sector",sector)
 
         app = QApplication(sys.argv)
-        editor = HexTableEditor(olddata)
+        editor = HexTableEditor(olddata, cyl, head, sector)
         editor.show()
         app.exec()
         

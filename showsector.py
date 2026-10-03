@@ -9,6 +9,93 @@ from tkinter import Tk
 from tkinter import filedialog as fd
 from tkinter import simpledialog
 import sys
+from PySide6.QtWidgets import QApplication, QTableWidget, QLineEdit, QTableWidgetItem, QStyledItemDelegate,  QVBoxLayout, QWidget, QHeaderView
+from PySide6.QtGui import QRegularExpressionValidator
+from PySide6.QtCore import QRegularExpression, Qt
+
+class HexCellDelegate(QStyledItemDelegate):
+    def __init__(self, validator, parent=None):
+        super().__init__(parent)
+        self.validator = validator
+
+    def createEditor(self, parent, option, index):
+        editor = QLineEdit(parent)
+        
+        editor.setValidator(self.validator) 
+        return editor
+
+
+class HexTableEditor(QWidget):
+    def __init__(self, old_sector_data, cyl, head, sector):
+        super().__init__()
+        self.setWindowTitle(f"Sector Display - Cylinder {cyl:X} ({cyl})  Head {head}  Sector {sector} - close to end or to choose another")
+        self.resize(750, 500) # Wider to accommodate headers comfortably
+        
+        layout = QVBoxLayout(self)
+        
+        # 321 fields fit nicely in a 20x16 or 21x16 grid
+        rows, cols = 21, 16  # 21 * 16 = 336 available cells
+        self.table = QTableWidget(rows, cols)
+        
+        # Generate column labels: "0", "1", ... "9", "A", ... "F"
+        col_labels = [f"{c:X}" for c in range(cols)]
+        self.table.setHorizontalHeaderLabels(col_labels)
+        
+        # Generate row labels: "0", "1", ... "20"
+        row_labels = [f"{r:X}" for r in range(rows)]
+        self.table.setVerticalHeaderLabels(row_labels)
+
+        # Strict validation: exactly 4 hexadecimal characters
+        hex_regex = QRegularExpression(r"^[0-9A-Fa-f]{4}$")
+        self.validator = QRegularExpressionValidator(hex_regex)
+        self.delegate = HexCellDelegate(self.validator, self)
+        self.table.setItemDelegate(self.delegate)
+        
+        total_fields = 0
+        for r in range(rows):
+            for c in range(cols):
+                if total_fields >= 321:
+                    # Disable trailing unused cells in the grid cleanly
+                    item = QTableWidgetItem("")
+    
+                    # Strip out the ItemIsEditable flag using bitwise operations
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) 
+    
+                    self.table.setItem(r, c, item)
+                    continue
+                
+                # Initialize item with sample data
+                item = QTableWidgetItem(old_sector_data[r*cols+c])
+                # Strip out the ItemIsEditable flag using bitwise operations
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) 
+                self.table.setItem(r, c, item)
+                total_fields += 1
+                
+        # Style header grid columns to look balanced
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        layout.addWidget(self.table)
+
+    def another_sector():
+        total_fields = 0
+        for r in range(rows):
+            for c in range(cols):
+                if total_fields >= 321:
+                    # Disable trailing unused cells in the grid cleanly
+                    item = QTableWidgetItem("")
+    
+                    # Strip out the ItemIsEditable flag using bitwise operations
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) 
+    
+                    self.table.setItem(r, c, item)
+                    continue
+                
+                # Initialize item with sample data
+                item = QTableWidgetItem(old_sector_data[r*cols+c])
+                # Strip out the ItemIsEditable flag using bitwise operations
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) 
+                self.table.setItem(r, c, item)
+                total_fields += 1
+
 
 def select_file():
     filetypes = (
@@ -23,6 +110,28 @@ def select_file():
         filetypes=filetypes,
         parent=root)
     return filehandle
+
+def validatecyl(astring):
+    legit = ["0", "1", "2", "3", "4", "5", "6", "7", \
+             "8", "9", "a", "b", "c", "d", "e", "f", \
+             "A", "B", "C", "D", "E", "F"]
+    decimal = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,10,11,12,13,14,15]
+    if len(astring) == 0 or len(astring) >2:
+        return ""
+    cstring = []
+    for x in range(2-len(astring)):
+        cstring.append("0")
+    cstring.append(astring)
+    rstring = "".join(cstring)
+    if not (rstring[0:1] in legit):
+        return ""
+    if not (rstring[1:] in legit):
+        return ""
+    pos = legit.index(rstring[0:1])
+    cyl = pos*16
+    pos = legit.index(rstring[1:])
+    cyl += pos
+    return cyl
 
 try:
 
@@ -105,7 +214,8 @@ try:
 
         cyl = -999
         while (cyl == -999):
-            cyl = simpledialog.askinteger("Input", "Cylinder number:",parent=root)
+            stringcyl = simpledialog.askstring("Input", "Cylinder number in hex:",parent=root)
+            cyl = validatecyl(stringcyl)
 
         head = -999
         while (head == -999):
@@ -137,14 +247,17 @@ try:
 
         sf.seek((skip*642),1)
 
-        print ("Displaying sector at","cylinder",cyl,"- hex",f"{cyl:#0{6}X}".replace("X","x"),"-","head",head,"sector",sector)
+        olddata = []
+        for addr in range (321):
+            olddata.append(f"{(int.from_bytes(sf.read(2), "little")):04X}")
 
-        for addr in range(321):
-            if  (addr == 320):
-                print(f"{addr:#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x"))        
-            elif (addr % 4 == 0):
-                print(f"{addr:#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x")," ",f"{(int.from_bytes(sf.read(2), "little")):#0{6}X}".replace("X","x"))
-                
+        app = QApplication.instance()
+        if app is None:
+            app = QApplication(sys.argv)
+        editor = HexTableEditor(olddata, cyl, head, sector)
+        editor.show()
+        app.exec()
+        
         choice = input("enter y to display another sector, any other character to exit")
         if (choice != "y"):
             root.destroy()
