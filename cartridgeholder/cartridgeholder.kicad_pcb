@@ -529,6 +529,9 @@
   (gr_text "Carl Claunch" (at 131.28 141.14) (layer "F.SilkS") (tstamp 5a1fbf7a-4227-4def-85f4-69322b559d22)
     (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
   )
+  (gr_text "1" (at 128.725 103.675) (layer "F.SilkS") (tstamp ca949cbe-6391-46b5-b34a-e9b5a84969ed)
+    (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
+  )
 
   (segment (start 129.1202 113.15) (end 128.3496 112.3794) (width 0.25) (layer "F.Cu") (net 1) (tstamp 07682650-6b00-49c3-8ebc-11ceb6a2ef51))
   (segment (start 126.34 112.41) (end 126.3706 112.3794) (width 0.25) (layer "F.Cu") (net 1) (tstamp 0a5b3227-b682-4222-b68b-df8f373636d8))

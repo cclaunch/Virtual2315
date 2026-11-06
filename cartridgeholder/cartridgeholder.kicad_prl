@@ -64,8 +64,8 @@
       39,
       40
     ],
-    "visible_layers": "801ffff_ffffffff",
-    "zone_display_mode": 0
+    "visible_layers": "80290b0_ffffffff",
+    "zone_display_mode": 1
   },
   "meta": {
     "filename": "cartridgeholder.kicad_prl",
