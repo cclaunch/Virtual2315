@@ -1,0 +1,23 @@
+%TF.GenerationSoftware,KiCad,Pcbnew,7.0.8*%
+%TF.CreationDate,2026-10-31T12:23:40-04:00*%
+%TF.ProjectId,barry drive,62617272-7920-4647-9269-76652e6b6963,V3*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+G04 Created by KiCad (PCBNEW 7.0.8) date 2026-10-31 12:23:40*
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+%TA.AperFunction,Profile*%
+%ADD10C,0.150000*%
+%TD*%
+G04 APERTURE END LIST*
+D10*
+X101575000Y-76175000D02*
+X133325000Y-76175000D01*
+X133325000Y-107925000D01*
+X101575000Y-107925000D01*
+X101575000Y-76175000D01*
+M02*
