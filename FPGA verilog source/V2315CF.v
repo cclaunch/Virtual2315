@@ -30,7 +30,6 @@
 `include "seek_to_cylinder.v"
 `include "spi_interface.v"
 `include "timing_gen.v"
-`include "serializer.v"
 
 //================================= TOP LEVEL INPUT-OUTPUT DEFINITIONS =====================================
 module V2315CF (
@@ -41,6 +40,10 @@ module V2315CF (
     input wire BUS_ACCESS_RDY_DRIVE_H,    // Seek ready and on-cylinder
     input wire BUS_HOME_DRIVE_L,          // indicates at track zero
     input wire BUS_WT_CLOCKB_DRIVE_L,     // 720 KHz clock to control writes
+            // These next two signals are not read nor used in this design
+            // as the heads are not lowered on the drive nor active
+    input wire BUS_RD_DATA_DRIVE_L,       // Read data pulses, 160 ns pulse
+    input wire BUS_RD_CLK_DRIVE_L,        // Read clock pulses, 160 ns pulse
     input wire BUS_FILE_READY_DRIVE_L,    // drive is ready, heads loaded, no error latches
     input wire BUS_SECTOR_DRIVE_L,        // 160 us negative pulse each time a sector slot passes the transducer
     input wire BUS_INDEX_DRIVE_L,         // 160 us negative pulse for each revolution of the disk, 600 μs after the sector pulse
@@ -112,14 +115,20 @@ module V2315CF (
     input wire clock,
     input wire pin_reset_n,
     
-// Debugging Outputs
-    output wire TESTER_OUTPUT_3_L,  // this is pin 45, brings out ECC Error flag
+// Tester Outputs, new in Emulator v1 hardware
+    output wire TESTER_OUTPUT_3_L, // this is pin 45
+    output wire Servo_Pulse_FPGA_pin,   // this is pin 73
+    output wire SPARE_PIO1_24,      // this is pin 74
     output wire SELECTED_RDY_LED_N, // this is pin 75
-    output wire Servo_Pulse_FPGA_pin,   // this is pin 73 and a copy of CMD_INTERRUPT
     output wire CMD_INTERRUPT      // this is pin 76
 );
 
 //============================ Internal Connections ==================================
+
+wire [7:0] MAJOR_VERSION;
+assign MAJOR_VERSION = 2;
+wire [7:0] MINOR_VERSION;
+assign MINOR_VERSION = 8;
 
 wire reset;
 
@@ -138,13 +147,6 @@ wire BUS_INDEX_L;               // Sector pulse for sector module
 wire BUS_WT_GATE_L;             // signal for write module
 wire BUS_RD_GATE_L;             // signal for read module
 wire BUS_HEAD_SELECT_L;         // signal for seek module
-wire BUS_WT_DATA_CLK_L;         // signal for write module
-wire BUS_WRITE_SEL_ERR_L;       // signal for bus output module
-wire BUS_90S_RELAY_L;            
-wire BUS_FILE_READY_L;            
-wire BUS_HOME_L;           
-wire BUS_ACCESS_RDY_H;      
-wire BUS_UNLOCKED_H;  
 
 wire clkenbl_sector;
 
@@ -153,7 +155,6 @@ wire Read_Only;
 wire Cart_Ready;
 wire Fault_Latch;
 wire real_drive;
-wire Reset_Cylinder;
 
 wire Selected_Ready;
 wire Selected;
@@ -179,6 +180,7 @@ wire [7:0] spi_serpar_reg;
 wire [15:0] dram_readdata;
 wire [15:0] dram_writedata_spi;
 wire [15:0] dram_writedata_buswrite;
+wire dram_addr_incr_buswrite;
 wire dram_writeack;
 
 wire [15:0] SDRAM_DQ_in;
@@ -191,12 +193,14 @@ wire clock_pulse;
 wire data_pulse;
 wire clkenbl_1usec;
 
+wire interface_test_mode;
+
 wire strobe_selected_ready;
-wire completed_seek;
 wire read_selected_ready;
 wire write_selected_ready;
-wire cmd_interrupt;
-wire CVC;
+
+wire Servo_Pulse_FPGA;
+
 
 //============================ MISC TOP LEVEL LOGIC TO DRIVE THE INDICATORS ==================================
 
@@ -205,7 +209,11 @@ assign FPANEL_WR_indicator =         ~write_indicator;
 assign FPANEL_RD_indicator =         ~read_indicator;
 assign FPANEL_ON_CYL_indicator =     ~(oncylinder_indicator & ~BUS_FILE_READY_CTRL_L);
 
+assign SPARE_PIO1_24 = Selected;
 assign SELECTED_RDY_LED_N = ~Selected_Ready;
+assign TESTER_OUTPUT_3_L = interface_test_mode ? ~1'b1 : ~1'b0; // this is pin 45
+
+assign Servo_Pulse_FPGA_pin = Servo_Pulse_FPGA;
 
 assign real_drive = BUS_REAL_DRIVE; // hybrid mode if true
 
@@ -213,12 +221,10 @@ assign Head_Select = ~BUS_HEAD_SELECT_L;
 
 assign BUS_UNLOCKED_LIGHT_H = ~BUS_UNLOCKED_EMUL_L;
 
-assign Servo_Pulse_FPGA_pin = cmd_interrupt;
+// this is on when the cable is connected between 2310 and the 1130 system
+// if not on, the drive write circuits are disabled thus we want this at 1
+//  assign BUS_CE_INTLK_H = 1'b1;     // not an FPGA output signal, instead hard wired
 
-assign CMD_INTERRUPT = cmd_interrupt;
-
-// assign TESTER_OUTPUT_3_L = ECC_error;
-assign TESTER_OUTPUT_3_L = CVC;
 
 //============================ SDRAM Bidirectional I/O pins ==================================
 
@@ -476,7 +482,7 @@ bus_disk_read i_bus_disk_read (
     .data_pulse (data_pulse),
     .dram_readdata (dram_readdata),
     .Selected_Ready (Selected_Ready),
-    .BUS_SECTOR_L (BUS_SECTOR_L),
+    .BUS_SECTOR_CTRL_L (BUS_SECTOR_CTRL_L),
     .clkenbl_sector (clkenbl_sector),
 
     // Outputs
@@ -494,21 +500,22 @@ bus_disk_write i_bus_disk_write (
     .clock (clock),
     .reset (reset),
     .BUS_WT_GATE_L (BUS_WT_GATE_L),
-    .BUS_WT_DATA_CLK_L (BUS_WT_DATA_CLK_L),
+    .BUS_WT_DATA_CLK_CTRL_L (BUS_WT_DATA_CLK_CTRL_L),
+    .BUS_WT_CLOCKB_L (BUS_WT_CLOCKB_L),
     .Selected_Ready (Selected_Ready),
+    .BUS_SECTOR_CTRL_L (BUS_SECTOR_CTRL_L),
     .clkenbl_sector (clkenbl_sector),
     .real_drive (real_drive),
     .dram_writeack (dram_writeack),
-    .Cart_Ready (Cart_Ready),
 
     // Outputs
     .dram_write_enbl_buswrite (dram_write_enbl_buswrite),
     .dram_writedata_buswrite (dram_writedata_buswrite),
     .load_address_buswrite (load_address_buswrite),
+    .dram_addr_incr_buswrite (dram_addr_incr_buswrite),
     .write_indicator (write_indicator),
     .write_selected_ready (write_selected_ready),
     .ECC_error (ECC_error),
-    .CVC (CVC), // CVC 
     .BUS_WT_CLOCKB_EMUL_L (BUS_WT_CLOCKB_EMUL_L)
 );
 
@@ -516,12 +523,24 @@ bus_disk_write i_bus_disk_write (
 bus_outputs i_bus_outputs (
     // Inputs
     .Selected (Selected),
-    .Fault_Latch (Fault_Latch),
     .Cart_Ready (Cart_Ready),
+    .Fault_Latch (Fault_Latch),
     .real_drive (real_drive),
-    .BUS_FILE_READY_L (BUS_FILE_READY_L),
-    .BUS_WRITE_SEL_ERR_L (BUS_WRITE_SEL_ERR_L),
-    .BUS_90S_RELAY_L (BUS_90S_RELAY_L),
+    .BUS_FILE_READY_DRIVE_L (BUS_FILE_READY_DRIVE_L),
+    .BUS_ACCESS_RDY_DRIVE_H (BUS_ACCESS_RDY_DRIVE_H),
+    .BUS_HOME_DRIVE_L (BUS_HOME_DRIVE_L),
+    .BUS_WT_CLOCKB_DRIVE_L (BUS_WT_CLOCKB_DRIVE_L),
+    .BUS_SECTOR_DRIVE_L (BUS_SECTOR_DRIVE_L),
+    .BUS_INDEX_DRIVE_L (BUS_INDEX_DRIVE_L),
+    .BUS_WRITE_SEL_ERR_DRIVE_L (BUS_WRITE_SEL_ERR_DRIVE_L),
+    .BUS_90S_RELAY_DRIVE_L (BUS_90S_RELAY_DRIVE_L),
+    .BUS_10_20_CTRL_L (BUS_10_20_CTRL_L),
+    .BUS_ACC_GO_DRIVE_CTRL_L (BUS_ACC_GO_DRIVE_CTRL_L),
+    .BUS_ACC_REV_CTRL_L (BUS_ACC_REV_CTRL_L),
+    .BUS_HEAD_SELECT_CTRL_L (BUS_HEAD_SELECT_CTRL_L),
+    .BUS_RD_GATE_CTRL_L (BUS_RD_GATE_CTRL_L),
+    .BUS_WT_GATE_CTRL_L (BUS_WT_GATE_CTRL_L),
+    .BUS_WT_DATA_CLK_CTRL_L (BUS_WT_DATA_CLK_CTRL_L),
     .BUS_ACCESS_RDY_EMUL_H (BUS_ACCESS_RDY_EMUL_H),
     .BUS_HOME_DRIVE_EMUL_L (BUS_HOME_DRIVE_EMUL_L),
     .BUS_WT_CLOCKB_EMUL_L (BUS_WT_CLOCKB_EMUL_L),
@@ -550,6 +569,15 @@ bus_outputs i_bus_outputs (
     .BUS_INDEX_CTRL_L (BUS_INDEX_CTRL_L),
     .BUS_WRITE_SEL_ERR_CTRL_L (BUS_WRITE_SEL_ERR_CTRL_L),
     .BUS_90S_RELAY_CTRL_L (BUS_90S_RELAY_CTRL_L),
+    .BUS_WT_CLOCKB_L (BUS_WT_CLOCKB_L),
+    .BUS_ACC_GO_L (BUS_ACC_GO_L),
+    .BUS_ACC_REV_L (BUS_ACC_REV_L),
+    .BUS_10_20_L (BUS_10_20_L),
+    .BUS_SECTOR_L (BUS_SECTOR_L),
+    .BUS_INDEX_L (BUS_INDEX_L),
+    .BUS_WT_GATE_L (BUS_WT_GATE_L),
+    .BUS_RD_GATE_L (BUS_RD_GATE_L),
+    .BUS_HEAD_SELECT_L (BUS_HEAD_SELECT_L),
     .Selected_Ready (Selected_Ready)
 );
 
@@ -559,7 +587,7 @@ drive_select i_drive_select (
     .clock (clock),
     .reset (reset),
     .Cart_Ready (Cart_Ready),
-    .BUS_UNLOCKED_H (BUS_UNLOCKED_H),
+    .BUS_UNLOCKED_DRIVE_H (BUS_UNLOCKED_DRIVE_H),
     .real_drive (real_drive),
     .clkenbl_1usec (clkenbl_1usec),
 
@@ -581,6 +609,7 @@ drive_select i_drive_select (
     .dram_read_enbl_busread (dram_read_enbl_busread),
     .dram_write_enbl_spi (dram_write_enbl_spi),
     .dram_write_enbl_buswrite (dram_write_enbl_buswrite),
+    .dram_addr_incr_buswrite (dram_addr_incr_buswrite),
     .dram_writedata_spi (dram_writedata_spi),
     .dram_writedata_buswrite (dram_writedata_buswrite),
     .spi_serpar_reg (spi_serpar_reg),
@@ -637,20 +666,18 @@ seek_to_cylinder i_seek_to_cylinder (
     .BUS_ACC_GO_L (BUS_ACC_GO_L),
     .BUS_ACC_REV_L (BUS_ACC_REV_L),
     .BUS_10_20_L (BUS_10_20_L),
-    .BUS_ACCESS_RDY_H (BUS_ACCESS_RDY_H),
     .clkenbl_1usec (clkenbl_1usec),
     .clkenbl_sector (clkenbl_sector),
     .Cart_Ready (Cart_Ready),
     .real_drive (real_drive),
-    .BUS_HOME_L (BUS_HOME_L),
-    .Reset_Cylinder (Reset_Cylinder),
+    .BUS_HOME_DRIVE_L (BUS_HOME_DRIVE_L),
+    .BUS_ACCESS_RDY_DRIVE_H (BUS_ACCESS_RDY_DRIVE_H),
 
     // Outputs
     .Cylinder_Address (Cylinder_Address),
     .BUS_ACCESS_RDY_EMUL_H (BUS_ACCESS_RDY_EMUL_H),
     .BUS_HOME_DRIVE_EMUL_L (BUS_HOME_DRIVE_EMUL_L),
     .oncylinder_indicator (oncylinder_indicator),
-    .completed_seek (completed_seek),
     .strobe_selected_ready (strobe_selected_ready)
 );
 
@@ -668,9 +695,11 @@ spi_interface i_spi_interface (
     .Selected_Ready (Selected_Ready),
     .BUS_UNLOCKED_EMUL_L (BUS_UNLOCKED_EMUL_L),
     .BUS_FILE_READY_CTRL_L (BUS_FILE_READY_CTRL_L),
-    .BUS_WRITE_SEL_ERR_L (BUS_WRITE_SEL_ERR_L),
+    .BUS_WRITE_SEL_ERR_DRIVE_L (BUS_WRITE_SEL_ERR_DRIVE_L),
+    .major_version (MAJOR_VERSION),
+    .minor_version (MINOR_VERSION),
     .Sector_Address (Sector_Address),
-    .strobe_selected_ready (completed_seek),
+    .strobe_selected_ready (strobe_selected_ready),
     .read_selected_ready (read_selected_ready),
     .write_selected_ready (write_selected_ready),
     .ECC_error (ECC_error),
@@ -686,8 +715,9 @@ spi_interface i_spi_interface (
     .Cart_Ready (Cart_Ready),
     .Read_Only (Read_Only),
     .Fault_Latch (Fault_Latch),
-    .Reset_Cylinder (Reset_Cylinder),
-    .command_interrupt (cmd_interrupt)
+    .interface_test_mode (interface_test_mode),
+    .command_interrupt (CMD_INTERRUPT),
+    .Servo_Pulse_FPGA (Servo_Pulse_FPGA)
 );
 
 // ======== Module ======== timing_gen =====
@@ -704,186 +734,4 @@ timing_gen i_timing_gen (
     .clkenbl_1usec (clkenbl_1usec)
 );
 
-// ======== Serializer Module for BUS_RD_GATE_CTRL_L ========
-serializer BUS_RD_GATE_CTRL_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_RD_GATE_CTRL_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_RD_GATE_L)
-);
-
-// ======== Serializer Module for BUS_WT_GATE_CTRL_L ========
-serializer BUS_WT_GATE_CTRL_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_WT_GATE_CTRL_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_WT_GATE_L)
-);
-
-// ======== Serializer Module for BUS_WT_DATA_CLK_CTRL_L ========
-serializer BUS_WT_DATA_CLK_CTRL_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_WT_DATA_CLK_CTRL_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_WT_DATA_CLK_L)
-);
-
-// ======== Serializer Module for BUS_HEAD_SELECT_CTRL_L ========
-serializer BUS_HEAD_SELECT_CTRL_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_HEAD_SELECT_CTRL_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_HEAD_SELECT_L)
-);
-
-// ======== Serializer Module for BUS_SECTOR_DRIVE_L ========
-serializer BUS_SECTOR_DRIVE_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_SECTOR_DRIVE_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_SECTOR_L)
-);
-
-// ======== Serializer Module for BUS_INDEX_DRIVE_L ========
-serializer BUS_INDEX_DRIVE_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_INDEX_DRIVE_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_INDEX_L)
-);
-
-// ======== Serializer Module for BUS_WRITE_SEL_ERR_DRIVE_L ========
-serializer BUS_WRITE_SEL_ERR_DRIVE_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_WRITE_SEL_ERR_DRIVE_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_WRITE_SEL_ERR_L)
-);
-
-// ======== Serializer Module for BUS_ACC_GO_DRIVE_CTRL_L ========
-serializer BUS_ACC_GO_DRIVE_CTRL_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_ACC_GO_DRIVE_CTRL_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_ACC_GO_L)
-);
-
-// ======== Serializer Module for BUS_ACC_REV_CTRL_L ========
-serializer BUS_ACC_REV_CTRL_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_ACC_REV_CTRL_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_ACC_REV_L)
-);
-
-// ======== Serializer Module for BUS_10_20_CTRL_L ========
-serializer BUS_10_20_CTRL_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_10_20_CTRL_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_10_20_L)
-);
-
-// ======== Serializer Module for BUS_ACCESS_RDY_DRIVE_H ========
-serializer BUS_ACCESS_RDY_DRIVE_H_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_ACCESS_RDY_DRIVE_H),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_ACCESS_RDY_H)
-);
-
-// ======== Serializer Module for BUS_HOME_DRIVE_L ========
-serializer BUS_HOME_DRIVE_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_HOME_DRIVE_L),
-    .initial_state (1'b0),
-
-    // Outputs
-    .serialized (BUS_HOME_L)
-);
-
-// ======== Serializer Module for BUS_FILE_READY_DRIVE_L ========
-serializer BUS_FILE_READY_DRIVE_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_FILE_READY_DRIVE_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_FILE_READY_L)
-);
-
-// ======== Serializer Module for BUS_90S_RELAY_DRIVE_L ========
-serializer BUS_90S_RELAY_DRIVE_L_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_90S_RELAY_DRIVE_L),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_90S_RELAY_L)
-);
-
-// ======== Serializer Module for BUS_UNLOCKED_DRIVE_H ========
-serializer BUS_UNLOCKED_DRIVE_H_serializer (
-    // Inputs
-    .clock (clock),
-    .reset (reset),
-    .input_data (BUS_UNLOCKED_DRIVE_H),
-    .initial_state (1'b1),
-
-    // Outputs
-    .serialized (BUS_UNLOCKED_H)
-);
-
-
 endmodule // V2315CF
-
