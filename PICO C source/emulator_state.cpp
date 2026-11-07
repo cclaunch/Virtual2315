@@ -184,6 +184,23 @@ int intermediate_result;
             if (get_real_mode() == false) {
                 if ( to_ms_since_boot(get_absolute_time()) - ready_time < 90000) {
                 //  twiddles thumbs here until 90 seconds elapses
+		if (dstate->rl_switch == 0) {
+			printf("Requested unload before drive became ready\r\n");
+			clear_cart_ready();
+			// Close the disk image file and set the Cart_Ready bit in the FPGA mode register
+        	    	printf("  Drive_Address = %d, RLST%x, %d, %d\r\n", dstate->Drive_Address, dstate->run_load_state, dstate->rl_switch, dstate->wp_switch);
+			intermediate_result = file_close_disk_image();
+			if(intermediate_result != 0){
+				printf("*** ERROR, problem closing disk image data file\n");
+				display_error((char *) "cannot close", (char *) "image file");
+				dstate->run_load_state = RLST18;
+			}
+			else {
+				printf("Disk image data read, file closed successfully\r\n");
+				dstate->run_load_state = RLST0;
+				clear_cart_ready();
+			}
+                }
                 break;
                 }
             }

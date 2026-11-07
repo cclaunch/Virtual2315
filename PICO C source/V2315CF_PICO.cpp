@@ -81,7 +81,7 @@ void callback(void *ptr){
 
 // pin interrupt to signal PICO from FPGA of seek, read or write
 void gpio_callback(uint gpio, uint32_t events) {
-    if((gpio == 4) && ((events & 0x8) == 0x8)){
+    if((gpio == (damage_mode ? 5 : 4)) && ((events & GPIO_IRQ_EDGE_RISE))){
 
         int readval = read_int_inputs();
         int operation_id = (readval >> 10) & 0x3;

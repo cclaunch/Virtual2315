@@ -254,16 +254,18 @@ int read_image_file_header(struct Disk_State* dstate)
         printf("numberOfHeads = %d\r\n", dstate->numberOfHeads);
         printf("microsecondsPerSector = %d\r\n", dstate->microsecondsPerSector);
 
-        return 0;
-    }
 
+        return 0;
+
+    }
+ 
     return 1;
 }
 
 int write_image_file_header(struct Disk_State* dstate)
 {
     bool rc;
-
+ 
     printf("Writing header to file '%s'\r\n", diskimagefilename);
 
     rc =       serialize_string(magicNumber, sizeof(magicNumber));
@@ -278,6 +280,7 @@ int write_image_file_header(struct Disk_State* dstate)
     rc = rc && serialize_int(dstate->numberOfHeads);           
     rc = rc && serialize_int(dstate->microsecondsPerSector);   
 
+ 
     return rc ? 0 : 1;
 
 }
@@ -352,13 +355,16 @@ int write_disk_image_data(struct Disk_State* dstate)
         for (headcount = 0; headcount < dstate->numberOfHeads; headcount++){
             for( sectorcount = 0; sectorcount < (dstate->numberOfSectorsPerTrack/2); sectorcount++){
                 ramaddress = (cylindercount << 12) | (headcount << 11) | (sectorcount << 9);
-                 load_ram_address(ramaddress);
-
-                //gpio_put(22, 1); // for debugging to time the loop
+                // back up one word to allow us to prime the pump
+                load_ram_address(ramaddress);
+                // read and ignore a word so data is primed for real reads
+                readbyte();
+                readbyte();
+ 
                 bp = sectordata;
                 for (int i = 0; i < bytecount; i++){
                     *bp++ = readbyte();
-                 }
+                }
 
                 fr = f_write(&fil, sectordata, bytecount, &nw);
                 if (fr != FR_OK || nw != bytecount) {

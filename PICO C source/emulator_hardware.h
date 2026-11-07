@@ -31,7 +31,7 @@ void initialize_spi();
 
 void load_ram_address(int ramaddress);
 void storebyte(int bytevalue);
-int readbyte();
+uint8_t readbyte();
 bool is_it_a_tester();
 int read_board_version();
 

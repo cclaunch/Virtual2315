@@ -121,7 +121,7 @@ static inline void cs_deselect()
 //
 uint8_t read_write_spi_register(uint8_t reg, uint8_t data)
 {
-    uint8_t out_buf [BUF_LEN], in_buf [BUF_LEN];
+    uint8_t out_buf [BUF_LEN+2], in_buf [BUF_LEN+2];
     uint8_t buf[2];
     out_buf[0] = reg;
     out_buf[1] = data;
@@ -133,7 +133,7 @@ uint8_t read_write_spi_register(uint8_t reg, uint8_t data)
 
 void write_spi_register(uint8_t reg, uint8_t data)
 {
-    uint8_t out_buf [BUF_LEN], in_buf [BUF_LEN];
+    uint8_t out_buf [BUF_LEN+2], in_buf [BUF_LEN+2];
     uint8_t buf[2];
     out_buf[0] = reg;
     out_buf[1] = data;
@@ -260,9 +260,9 @@ void storebyte(int bytevalue)
     write_spi_register(SPI_DRAM_DATA_6, bytevalue & 0xff);
 }
 
-int readbyte()
+uint8_t readbyte()
 {
-    int readdata = read_write_spi_register(SPI_DRAMREAD_88, 0);
+    uint8_t readdata = read_write_spi_register(SPI_DRAMREAD_88, 0);
     return(readdata);
 
 }
