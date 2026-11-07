@@ -10,7 +10,6 @@ module TB_sdram_controller(
     input wire load_address_buswrite,    // enable from bus write to sdram controller to load the address from sector, head select and cylinder
     input wire dram_read_enbl_spi,       // read enable request to DRAM controller from SPI
     input wire dram_read_enbl_busread,   // read enable request to DRAM controller from the BUS interface
-    input wire dram_addr_incr_buswrite,  // increment address without write
     input wire dram_write_enbl_spi,      // write enable request to DRAM controller from SPI
     input wire dram_write_enbl_buswrite, // write enable request to DRAM controller from the BUS interface
     input wire [15:0] dram_writedata_spi,       // 16-bit write data to DRAM controller from SPI
@@ -19,7 +18,6 @@ module TB_sdram_controller(
     input wire [1:0] Sector_Address,           // specifies which sector is present "under the heads"
     input wire [7:0] Cylinder_Address,         // valid cylinder address
     input wire Head_Select,              // head selection (upper or lower)
-
 
     input wire [15:0] SDRAM_DQ_in,     // input from DQ signal receivers
 
@@ -58,14 +56,16 @@ reg [31:0] infile;
 //============================ Start of Code =========================================
 
 assign loadaddrrequest = load_address_spi | load_address_busread | load_address_buswrite;
-assign readrequest = dram_read_enbl_spi | dram_read_enbl_busread | load_address_busread;
+assign readrequest = dram_read_enbl_spi | dram_read_enbl_busread | load_address_busread ;
 assign writerequest = dram_write_enbl_spi | dram_write_enbl_buswrite;
 assign dramoutput = dram_write_enbl_spi ? dram_writedata_spi : dram_writedata_buswrite;
 
 
 initial begin
-  forever begin
+  begin
     outfile = $fopen("log.txt", "w");
+    $fdisplay(outfile, "START OF WRITE\n");
+    $fflush(outfile);
     @(posedge loadaddrrequest)
     infile = $fopen("SDRAM.txt","r");
   end
@@ -75,13 +75,15 @@ initial begin
    forever begin
     @(posedge writerequest)
     $fdisplay(outfile, "data %h\n",dramoutput);
+    $fflush(outfile);
   end
 end
 
 initial begin
   dram_readdata <= 16'b0;
   forever begin
-    @(posedge readrequest)
+    @(posedge readrequest) 
+    #125
     $fscanf(infile, "%h", dram_readdata);
   end
 end
@@ -97,7 +99,7 @@ sdram_controller real_sdram_controller (
     .dram_read_enbl_spi (dram_read_enbl_spi),
     .dram_read_enbl_busread (dram_read_enbl_busread),
     .dram_write_enbl_spi (dram_write_enbl_spi),
-    .dram_addr_incr_buswrite (dram_addr_incr_buswrite),
+//    .dram_addr_incr_buswrite (dram_addr_incr_buswrite),
     .dram_write_enbl_buswrite (dram_write_enbl_buswrite),
     .dram_writedata_spi (dram_writedata_spi),
     .dram_writedata_buswrite (dram_writedata_buswrite),
@@ -110,7 +112,6 @@ sdram_controller real_sdram_controller (
 
     // Outputs
     .dram_readdata (real_dram_readdata),
-    .dram_readack (dram_readack),
     .dram_writeack (dram_writeack),
 
     .SDRAM_DQ_output (SDRAM_DQ_output),

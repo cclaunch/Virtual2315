@@ -34,11 +34,11 @@ module sector_and_index(
 reg [15:0] int_usec_in_sector;
 reg [17:0] int_usec_in_track;
 reg [15:0] microseconds_per_sector;
-reg [3:0] meta_bus_sector;
-reg [3:0] meta_bus_index;
 reg [0:0] eat_pulses;
 reg [2:0] PSector_Address;      
 reg clkenbl_index;      
+reg oldBUS_INDEX_L;
+reg oldBUS_SECTOR_L;
 
 //============================ Start of Code ========================================= 
 
@@ -53,21 +53,24 @@ begin : SECTORCOUNTERS // block name
     clkenbl_sector <= 1'b0;
     BUS_SECTOR_EMUL_H <= 1'b0;
     BUS_INDEX_EMUL_H <=  1'b0;
+    oldBUS_INDEX_L <= 1'b1;
+    oldBUS_SECTOR_L <= 1'b1;
     microseconds_per_sector = 16'd9999;
-    meta_bus_sector <= 4'd0;
-    meta_bus_index <= 4'd0;
     eat_pulses <= 1'd0;
   end
   else begin
 
-    meta_bus_sector[3:0] <= {meta_bus_sector[2:0], ~BUS_SECTOR_L};
-    meta_bus_index[3:0] <= {meta_bus_index[2:0], ~BUS_INDEX_L};
+    // save previous BUS_INDEX_L so we can catch the edge
+    oldBUS_INDEX_L <= BUS_INDEX_L;
+
+    // save previous BUS_SECTOR_L so we can catch edge of that signal
+    oldBUS_SECTOR_L <= BUS_SECTOR_L;
 
     // reset at rising edge of index (falling edge of BUS_INDEX_L)
     // flip on each falling edge of sector (rising edge of BUS_SECTOR_L)
-    eat_pulses <= meta_bus_index[3] == 1'b0 && meta_bus_index[2] == 1'b1
+    eat_pulses <= BUS_INDEX_L == 1'b0 && oldBUS_INDEX_L == 1'b1
                   ? 1'b0
-                  : meta_bus_sector[3] == 1'b1 && meta_bus_sector[2] == 1'b0
+                  : BUS_SECTOR_L == 1'b0 && oldBUS_SECTOR_L == 1'b1
                     ? ~eat_pulses
                     : eat_pulses;
 
@@ -90,7 +93,7 @@ begin : SECTORCOUNTERS // block name
 
     // create index pulse at start of BUS_INDEX or begin of track
     clkenbl_index <= real_drive == 1'b1 
-                      ? meta_bus_index[3] == 1'b0 && meta_bus_index[2] == 1'b1 
+                      ? BUS_INDEX_L == 1'b0 && oldBUS_INDEX_L == 1'b1 
                           ? 1'b1
                           : 1'b0
                       : ((int_usec_in_track == 18'd599) && clkenbl_1usec);
@@ -99,7 +102,7 @@ begin : SECTORCOUNTERS // block name
     //  wrap the usec in sector counter, increment the sector address
     // eat_pulses is off at index, on at next sector and every other sector
     clkenbl_sector <= real_drive == 1'b1 
-                      ? meta_bus_sector[3] == 1'b1 && meta_bus_sector[2] == 1'b0 && eat_pulses[0] == 1'b1
+                      ? BUS_SECTOR_L == 1'b0 && oldBUS_SECTOR_L == 1'b1 && eat_pulses[0] == 1'b1
                           ? 1'b1
                           : 1'b0
                       : ((int_usec_in_sector == 165) && clkenbl_1usec);
@@ -136,7 +139,7 @@ begin : SECTORCOUNTERS // block name
 
     // count microseconds in this sector
     int_usec_in_sector <= real_drive == 1'b1
-                          ? ((meta_bus_index[1] == 1'b1) && (meta_bus_index[0] == 1'b0))
+                          ? ((BUS_INDEX_L == 1'b0) && (oldBUS_INDEX_L == 1'b1))
                               ? 16'd600
                               : clkenbl_1usec 
                                   ?  (int_usec_in_sector == microseconds_per_sector) 
@@ -163,11 +166,11 @@ begin : SECTORCOUNTERS // block name
     // count physical sectors   
     PSector_Address <= real_drive == 1'b1
                        // for hybrid with real drive sending sector and index pulses
-                       ? meta_bus_sector[3] == 1'b1 && meta_bus_sector[2] == 1'b0
+                       ? BUS_SECTOR_L == 1'b0 && oldBUS_SECTOR_L == 1'b1
                          // at sector pulse end, bump address
                          ? PSector_Address + 1
                          // otherwise look for beginning of index pulse
-                         : meta_bus_index[3] == 1'b0 && meta_bus_index[2] == 1'b1
+                         : BUS_INDEX_L == 1'b0 && oldBUS_INDEX_L == 1'b1
                            // index pulse resets counter
                            ? 3'd7
                            // otherwise retain it

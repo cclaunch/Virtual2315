@@ -36,6 +36,7 @@ reg reset;
     wire BUS_INDEX_EMUL_H;     // active-high 165 usec index pulse
     wire[1:0] Sector_Address; //counter that specifies which sector is present "under the heads"
      wire dram_read_enbl_busread; // read enable request to DRAM controller
+     reg dram_addr_incr_buswrite; // not sure but need it
 
 
      wire dram_read_enbl_busread; // read enable request to DRAM controller
@@ -82,6 +83,7 @@ reg Head_Select;
 .dram_readdata (dram_readdata),
 .Selected_Ready  (Selected_Ready),
 .clkenbl_sector (clkenbl_sector),
+.BUS_SECTOR_L (BUS_SECTOR_L),
 .dram_read_enbl_busread (dram_read_enbl_busread),
 .BUS_RD_DATA_H (BUS_RD_DATA_H),
 .BUS_RD_CLK_H (BUS_RD_CLK_H),
@@ -147,7 +149,6 @@ reg Head_Select;
     .BUS_SECTOR_L (BUS_SECTOR_L),      
     .BUS_INDEX_L (BUS_INDEX_L),      
     .clkenbl_sector (clkenbl_sector),                  // enable for disk read clock
-    .clkenbl_index (clkenbl_index),                    // enable for disk read data
     .BUS_SECTOR_EMUL_H (BUS_SECTOR_EMUL_H),            // active-high 165 usec sector pulse
     .BUS_INDEX_EMUL_H (BUS_INDEX_EMUL_H),              // active-high 165 usec index pulse
     .Sector_Address  (Sector_Address)                  //counter that specifies sector present "under the heads"
@@ -171,6 +172,7 @@ assign ask_dram = load_address_busread | dram_read_enbl_busread;
 
 // start off our bus read module constants
    initial begin
+     dram_addr_incr_buswrite <= 1'b0; // CVC
      Cylinder_Address  <= 8'd0;
      Head_Select <= 1'b0;
      dram_read_enbl_spi <= 1'b0;
@@ -188,9 +190,21 @@ assign ask_dram = load_address_busread | dram_read_enbl_busread;
     initial begin
       @(negedge reset)
       BUS_RD_GATE_L <= 1'b1;
-      #85166033
+      #85164000
       BUS_RD_GATE_L <= 1'b0;
-      #9768004
+      #33
+      BUS_RD_GATE_L <= 1'b1;
+      #4000
+      BUS_RD_GATE_L <= 1'b0;
+      #508000
+      BUS_RD_GATE_L <= 1'b1;
+      #100
+      BUS_RD_GATE_L <= 1'b0;
+      #722001
+      BUS_RD_GATE_L <= 1'b1;
+      #107
+      BUS_RD_GATE_L <= 1'b0;
+      #9508004
       BUS_RD_GATE_L <= 1'b1;
     end
 

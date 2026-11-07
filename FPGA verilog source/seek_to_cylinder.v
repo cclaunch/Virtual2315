@@ -15,17 +15,21 @@
 //   if reverse and we would go below 0, stop at 0 and set Home signal
 //   if forward and we would go past 202, stop at 202
 //   
-//   Respond with bus Access Ready which drops 5 ms after access go received and 
-//   remains low for another 10 ms before returning high. In real mode, the drive 
-//   responds or we emulate Access Ready when in virtual mode. 
+//   Respond with bus Access Ready which drops 5.5 ms after access go received and 
+//   remains low for another 9 ms before returning high. Only care about falling
+//   edge of BUS_ACC_GO_L to indicate a seek has begun
 //
 //   flickers the oncylinder indicator to indicate a seek (150 millisecond duration)
 //
 //   the real Home signal from the disk drive is used to force sync to cylinder zero in real mode
 //
+//   pulses the completed_seek signal at the end of a series of seek steps, resets after seek indicator goes off
+//
 // Modified for 2310 by Carl Claunch
 //
 //==========================================================================================================
+
+`include "debouncer.v"
 
 module seek_to_cylinder(
     input wire clock,                  // master clock 40 MHz
@@ -35,45 +39,39 @@ module seek_to_cylinder(
     input wire BUS_ACC_GO_L,           // request movement of the heads when low
     input wire BUS_ACC_REV_L,          // access direction for arm movement, high is forward
     input wire BUS_10_20_L,            // one or two cylinder arm movement, low is 10 mil
+    input wire BUS_ACCESS_RDY_H,       // drops during portion of a seek
     input wire clkenbl_sector,         // blip at each logical 2310 sector
     input wire clkenbl_1usec,          // 1 usec clock enable input from the timing generator
-    input wire BUS_HOME_DRIVE_L,       // disk drive home indicator
-    input wire BUS_ACCESS_RDY_DRIVE_H, // disk drive ready for seek commands
+    input wire BUS_HOME_L,             // disk drive home indicator
     input Cart_Ready,                  // virtual cartridge loaded
     input wire real_drive,             // real or virtual mode
+    input wire Reset_Cylinder,         // control flag to force arm to home position
 
     output reg [7:0] Cylinder_Address, // internal register to store the valid cylinder address
     output reg BUS_ACCESS_RDY_EMUL_H,  // access ready signal
     output reg BUS_HOME_DRIVE_EMUL_L,  // at home cylinder (0) when low
     output reg oncylinder_indicator,   // active high signal to drive the On Cylinder front panel indicator
+    output reg completed_seek,          // indicates an 1130 XIO Seek has completed
     output reg strobe_selected_ready   // synchronized access go and selected_ready for command interrupt
 );
 
 //============================ Internal Connections ==================================
 
-reg [3:0] meta_bus_go;        // sampling and metastability reduction of Bus Access Go
-reg [3:0] meta_bus_accdir;    // sampling and metastability reduction of Bus Access Rev
-reg [3:0] meta_bus_10_20;     // sampling and metastability reduction of Bus Access 10/20
-reg [3:0] meta_bus_sector;    // sampling and metastability reduction of Bus clkenbl_sector
-reg [3:0] meta_bus_home;      // sampling and metastability reduction of Bus Home Drive
-reg [3:0] meta_bus_ready;     // sampling and metastability reduction of Bus Access Ready
-reg [18:0] seek_timer;        // counts microseconds while seek is active
-reg [18:0] safety_timer;      // bails us out of false triggered seeks
-reg [4:0] oncylinder_counter; // counts to blink the seek light
-reg [3:0] ready_count;        // count up/down to debounce/deglitch Access Ready
-reg       hold_step;          // grab the step size
-reg       hold_direction;     // grab the direction of motion
+reg [18:0] seek_timer;         // counts microseconds while seek is active
+reg [4:0]  oncylinder_counter; // counts to blink the seek light
+reg [4:0]  group_timer;        // counts microseconds after a seek step ends
+reg        hold_step;          // grab the step size
+reg        hold_direction;     // grab the direction of motion
+wire       debounced_go;       // debounced inverted version of BUS_ACC_GO_L
+wire       debounced_ready;    // debounced BUS_ACCESS_RDY_DRIVE_H
+
 
 // state definitions and values for the seek action
-`define SKST0 3'd0 // 0 - idle
-`define SKST1 3'd1 // 1 - virtual seek request begins
-`define SKST2 3'd2 // 2 - virtual dropped ready after 5ms
-`define SKST3 3'd3 // 3 - virtual ready restored after 15ms
-`define SKST4 3'd4 // 4 - real verify access ready on strobe
-`define SKST5 3'd5 // 5 - real wait for access ready to drop
-`define SKST6 3'd6 // 6 - real grab seek results
-`define SKST7 3'd7 // 7 - real wait for access ready to rise
-reg [2:0] seek_state; // seek state machine state variable
+`define SKST0 2'd0    // 0 - idle
+`define SKST1 2'd1    // 1 - seek request begins
+`define SKST2 2'd2    // 2 - update cylinder after 5ms
+`define SKST3 2'd3    // 3 - update cylinder after 5ms
+reg [1:0] seek_state; // seek state machine state variable
 
 // 2310 disk drive is commanded to move forward or backward, with a 10 or 20 milli-inch step size
 // no absolute seek to a target cylinder number
@@ -85,49 +83,40 @@ begin
 
     if(reset == 1'b1) begin
         Cylinder_Address      <= 8'd0;
-        meta_bus_go[3:0]      <= 4'h0;
-        meta_bus_accdir[3:0]  <= 4'h0;
-        meta_bus_10_20[3:0]   <= 4'h0;
-        meta_bus_sector[3:0]  <= 4'h0;
-        meta_bus_home[3:0]    <= 4'h0;
-        meta_bus_ready[3:0]   <= 4'h0;
         BUS_ACCESS_RDY_EMUL_H <= 1'b1;
         BUS_HOME_DRIVE_EMUL_L <= 1'b0;
         seek_timer            <= 19'd0;
-        safety_timer          <= 19'd0;
         strobe_selected_ready <= 1'b0;
         oncylinder_counter    <= 5'd0;
         oncylinder_indicator  <= 1'b0;
         hold_step             <= 1'b0;
         hold_direction        <= 1'b0;
-        ready_count           <= 4'd0;
+        group_timer           <= 5'd0;
+        completed_seek        <= 1'b0;
         seek_state            <= `SKST0;
     end
     else begin
 
-        // we are ready and we have a falling edge request for a seek (meta_bus_go is inverted from -Access Go)
-        strobe_selected_ready <= (meta_bus_go[3]  == 1'b0) && (meta_bus_go[2] == 1'b1) && (Selected_Ready);
+        // we emit for the duration of a seek
+        strobe_selected_ready <= (debounced_go) && (strobe_selected_ready == 1'b0)
+                                 ? 1'b1
+                                 :  debounced_go == 1'b0
+                                   ? 1'b0
+                                   : strobe_selected_ready;
 
-        // when access go was blipped in the last cycle, count for 15 ms worth of time
+                             
+        // when access go was blipped in the last cycle, count for 14.5 ms worth of time
         // this is needed in virtual mode
-        seek_timer <=  (strobe_selected_ready && seek_timer == 0)
-                        ? 19'd15000
-                        : (clkenbl_1usec == 1'b1)
-                          ? (seek_timer == 0)
-                             ? seek_timer
-                             : seek_timer - 1
-                          : seek_timer;
+        seek_timer <=  (strobe_selected_ready) && (debounced_go) && (seek_timer == 19'd0)
+                        ?  19'd14500   
+                         : (clkenbl_1usec == 1'b1)
+                             ? (seek_timer == 0)
+                                ? seek_timer
+                                : seek_timer - 1
+                             : seek_timer;
 
-        // for virtual, goes low at 5ms after go and returns high after full 15 ms
+        // generated to go low at 5.5ms after go and returns high after full 14.5 ms
         BUS_ACCESS_RDY_EMUL_H <= (seek_timer > 10000) || (seek_timer == 0);
-
-        // clock domain crossing elimination of metastable states
-        meta_bus_go[3:0]     <= {meta_bus_go[2:0], ~BUS_ACC_GO_L};
-        meta_bus_accdir[3:0] <= {meta_bus_accdir[2:0], BUS_ACC_REV_L};
-        meta_bus_10_20[3:0]  <= {meta_bus_10_20[2:0], BUS_10_20_L};
-        meta_bus_sector[3:0] <= {meta_bus_sector[2:0], clkenbl_sector};
-        meta_bus_home[3:0]   <= {meta_bus_home[2:0], BUS_HOME_DRIVE_L};
-        meta_bus_ready[3:0]  <= {meta_bus_ready[2:0], BUS_ACCESS_RDY_DRIVE_H};
 
         // emit emulated home switch, used in virtual mode, when arm at track 0
         BUS_HOME_DRIVE_EMUL_L <= (Cylinder_Address == 8'd0) 
@@ -137,7 +126,7 @@ begin
         // on strobe set counter, at falling edge of sector count down, thus flash for 150 ms
         oncylinder_counter <= strobe_selected_ready == 1'b1
                          ? 16 
-                         : (meta_bus_sector[3] == 1'b1 && meta_bus_sector[2] == 1'b0)
+                         : (clkenbl_sector == 1'b1)
                                 ? (oncylinder_counter == 0) 
                                         ? 0 
                                         : oncylinder_counter - 1
@@ -146,68 +135,65 @@ begin
         // flash of SEEK indicator because seek was requested within 150ms
         oncylinder_indicator <= (oncylinder_counter != 0);
 
-        // ready counter maintained
-           // we require a minimum of 10 cycles turned on
-           // in order to consider the signal legitimately on
-           // and 10 cycles minimum turned off to be considered
-           // actually off. a ty of debouncing
-        ready_count         <=  meta_bus_ready[3] == 1'b1
-				?  ready_count == 4'd10
-                                   ?  4'd10
-                                   :  ready_count + 1
-				:  ready_count == 4'd0
-                                   ?  4'd0
-                                   :  ready_count - 1;
-
         case(seek_state)
         // sitting idle waiting for a seek request
         `SKST0: begin    
 
-           // if we see the Acc Go signal begin a seek 
-           seek_state <= (strobe_selected_ready)
-                             ? (real_drive == 1'b1)
-                               ? `SKST4
-                               : `SKST1
-                             : `SKST0;
-
            // always reset to Home when cartridge is unloaded
-           Cylinder_Address <= Cart_Ready == 1'b0
+           // or the reset_cylinder flag is set
+           // also in real mode, reset if we start at home cylinder
+           Cylinder_Address <= ((Cart_Ready == 1'b0) || (Reset_Cylinder == 1'b1))
                                ? 0
-                               : Cylinder_Address;
+                               :  (real_drive == 1'b1) && (BUS_HOME_L == 1'b0)
+                                  ?  0
+                                  :  Cylinder_Address;
 
-           // save the step size because it will be reset when Access Ready goes low
-           hold_step  <= meta_bus_10_20[3];
+           // save the step size because it may be reset when Access Ready goes low
+           hold_step  <= BUS_10_20_L;
 
            // save the direction of motion as well
-           hold_direction <= meta_bus_accdir[3];
+           hold_direction <= BUS_ACC_REV_L;
+
+           // process group timer every microsecond
+           group_timer    <=  (clkenbl_1usec == 1'b1)
+                              ?  (group_timer > 0)
+                                 ?  group_timer - 1
+                                 :  group_timer
+                              :  group_timer;
+
+           // turn on completed_seek if group_timer about to drop to zero
+           completed_seek <=  (clkenbl_1usec == 1'b1) && (group_timer == 1)
+                              ?  1'b1
+                              :  oncylinder_indicator == 1'b0
+                                 ?  1'b0
+                                 :  completed_seek;
+           
+           // if we see the Acc Go signal begin a seek 
+           seek_state <= ((strobe_selected_ready) && (debounced_go))
+                             ? `SKST1
+                             : `SKST0;
+
         end
 
-        // request received in virtua mode
-        `SKST1: begin    
+        // wait here for debouncer interval, then for -Access Go goes high
+        `SKST1: begin
 
-           // if we see Acc Ready drop, move to state 2 
-           seek_state <=  BUS_ACCESS_RDY_EMUL_H == 1'b0
-                             ? `SKST2
-                             : `SKST1;
+           // turn off completed_seek and reset the group timer
+           completed_seek  <= 1'b0;
+           group_timer     <= 5'd31;
+                                    
+           seek_state <= real_drive == 1'b1
+                           ?  ((debounced_go == 1'b0) && (debounced_ready == 1'b0))
+                              ?  `SKST2
+                              :  `SKST1
+                           :  ((debounced_go == 1'b0) && (BUS_ACCESS_RDY_EMUL_H == 1'b0))
+                              ?  `SKST2
+                              :  `SKST1;
 
         end
 
-        // Access Ready dropped 
-        `SKST2: begin     
-
-           // when Acc Ready comes back on it virtual, move to final state
-           // when ready_count reaches 10 in real mode, move to final state
-           seek_state <=  real_drive == 1'b1
-                          ?  (ready_count == 4'd10) 
-                             ? `SKST3
-                             : `SKST2
-                          :  BUS_ACCESS_RDY_EMUL_H == 1'b1
-                             ? `SKST3
-                             : `SKST2;
-        end
-
-        // Access Ready raised
-        `SKST3: begin     
+        // grab the seek results
+        `SKST2: begin
 
             // move cylinder location
             Cylinder_Address <= (hold_direction == 1'b1)  // forward
@@ -220,100 +206,80 @@ begin
                                     ? Cylinder_Address + 1
                                     : 202
                                 // move 1 or 2 tracks in reverse unless already at home (0)
-                                : hold_step == 1'b1         // 1 = 20 mil step, 0 = 10 mil step
-                                  ? Cylinder_Address > 2
-                                    ? Cylinder_Address - 2
-                                    : 0
-                                  : Cylinder_Address > 1
-                                    ? Cylinder_Address - 1
-                                    : 0;
+                                :  hold_step == 1'b1         // 1 = 20 mil step, 0 = 10 mil step
+                                   ? Cylinder_Address > 2
+                                      ? Cylinder_Address - 2
+                                      : 0
+                                   : Cylinder_Address > 1
+                                      ? Cylinder_Address - 1
+                                      : 0;
 
-             // now we are done
-             seek_state <= `SKST0;
+           // turn off completed_seek and reset the group timer
+           completed_seek  <= 1'b0;
+           group_timer     <= 5'd31;
 
-        end
-
-        // verify we had access ready else ignore spurious access go request
-        `SKST4: begin
-
-            // start timer for when we wait for access ready to drop in next state
-            safety_timer   <=   19'd19500;
-
-            // if access ready is on, advance else bail out
-            seek_state <= (ready_count == 4'd10)
-                          ? `SKST5
-                          : `SKST0;
+            // go wait for the next seek  
+            seek_state <= `SKST3;
 
         end
 
-        // wait for access ready to drop 
-        `SKST5: begin
+        // wait to end the seek
+        `SKST3: begin
 
-            // update the timer as we sit here
-            safety_timer <=  (clkenbl_1usec == 1'b1)
-                             ? (safety_timer == 0)
-                                ? safety_timer
-                                : safety_timer - 1
-                             : safety_timer;
+           // turn off completed_seek and reset the group timer
+           completed_seek  <= 1'b0;
+           group_timer     <= 5'd31;
 
-            // if it drops, move on. 
-            // if safett timer pops, bail out, 
-            // otherwise stay here waiting
-            seek_state <= (ready_count == 4'd0)
-                          ? `SKST6
-                          : (safety_timer == 19'd0)
-                            ?  `SKST0
-                            :  `SKST5;
+            // go wait for the next seek            
+            seek_state <= real_drive == 1'b1
+                          ?  (debounced_ready == 1'b1)
+                             ? `SKST0
+                             : `SKST3
+                          :  (seek_timer == 0)
+                             ?  `SKST0
+                             :  `SKST3;
 
         end
 
-        // grab the seek results
-        `SKST6: begin
-
-            // move cylinder location
-            Cylinder_Address <= (~meta_bus_home[3] && real_drive == 1'b1) 
-     	                        // home switch went on in real mode, set Cylinder to 0
-          	                ? 0
-                                : (hold_direction == 1'b1)  // forward
-                                   // move 1 or 2 tracks forward unless already at 202
-                                   ? hold_step == 1'b1         // 1 = 20 mil step, 0 = 10 mil step
-                                     ? Cylinder_Address < 200
-                                       ? Cylinder_Address + 2
-                                       : 202
-                                     : Cylinder_Address < 201
-                                       ? Cylinder_Address + 1
-                                       : 202
-                                   // move 1 or 2 tracks in reverse unless already at home (0)
-                                   : hold_step == 1'b1         // 1 = 20 mil step, 0 = 10 mil step
-                                     ? Cylinder_Address > 2
-                                       ? Cylinder_Address - 2
-                                       : 0
-                                     : Cylinder_Address > 1
-                                       ? Cylinder_Address - 1
-                                       : 0;
-
-            // go wait for the seek to end, when access ready goes high
-            seek_state <= `SKST7;
-
-        end
-
-        // wait for access ready to go high
-        `SKST7: begin
-
-            // when high, we are done else wait
-            seek_state <= (ready_count == 4'd10)
-                          ? `SKST0
-                          : `SKST7;
-
-        end
 
         default: begin
-            seek_state <= `SKST0;
+
+           // turn off completed_seek and reset the group timer
+           completed_seek  <= 1'b0;
+           group_timer     <= 5'd31;
+
+           seek_state <= `SKST0;
+
         end
 
         endcase
 
     end
 end
+
+// ======== Debouncer Module for ~BUS_ACC_GO_L ========
+debouncer go_debouncer (
+    // Inputs
+    .clock (clock),
+    .reset (reset),
+    .input_data (~BUS_ACC_GO_L),
+    .initial_state (1'b0),
+
+    // Outputs
+    .debounced_data (debounced_go)
+);
+
+// ======== Debouncer Module for BUS_ACCESS_RDY_DRIVE_H ========
+debouncer ready_debouncer (
+    // Inputs
+    .clock (clock),
+    .reset (reset),
+    .input_data (BUS_ACCESS_RDY_H),
+    .initial_state (1'b1),
+
+    // Outputs
+    .debounced_data (debounced_ready)
+);
+
 
 endmodule // End of Module sector_and_index
