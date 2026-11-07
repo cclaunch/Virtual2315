@@ -1,0 +1,5 @@
+special information pin 45 TESTER_OUTPUT_3_L 
+
+routes to U20 to output to connector B pin U2
+
+temporary use to bring out ECC_error signal from bus_write.v
